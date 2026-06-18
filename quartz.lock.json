@@ -7,6 +7,12 @@
       "commit": "73a98dda7e4f55239310833299d91daf8611349f",
       "installedAt": "2026-06-09T17:57:45.809Z"
     },
+    "arbor-taxonomy": {
+      "source": "github:diego-vicente/arbor-taxonomy",
+      "resolved": "https://github.com/diego-vicente/arbor-taxonomy.git",
+      "commit": "4d636ee2b5c1a50bec3f0c85e2f2cabc6c361dd1",
+      "installedAt": "2026-06-17T10:58:22.832Z"
+    },
     "article-title": {
       "source": "github:quartz-community/article-title",
       "resolved": "https://github.com/quartz-community/article-title.git",
@@ -20,10 +26,10 @@
       "installedAt": "2026-06-03T13:32:35.225Z"
     },
     "bases-page": {
-      "source": "github:quartz-community/bases-page",
-      "resolved": "https://github.com/quartz-community/bases-page.git",
-      "commit": "f8fc7da3515a4d4bbe0bd4be0fd9188823866a01",
-      "installedAt": "2026-06-03T13:32:35.344Z"
+      "source": "github:diego-vicente/bases-page",
+      "resolved": "https://github.com/diego-vicente/bases-page.git",
+      "commit": "2545a661bfd9715320f1f07c9961ecd68f96d37b",
+      "installedAt": "2026-06-17T18:02:19.087Z"
     },
     "breadcrumbs": {
       "source": "github:quartz-community/breadcrumbs",
@@ -56,10 +62,10 @@
       "installedAt": "2026-06-03T13:32:35.236Z"
     },
     "content-index": {
-      "source": "github:quartz-community/content-index",
-      "resolved": "https://github.com/quartz-community/content-index.git",
-      "commit": "c3d4f5c85311712c3355cd71da46b28e2d8eba71",
-      "installedAt": "2026-06-03T13:32:35.431Z"
+      "source": "github:diego-vicente/content-index",
+      "resolved": "https://github.com/diego-vicente/content-index.git",
+      "commit": "34d3e278bad8361c968107e64d3229122ca2a45e",
+      "installedAt": "2026-06-17T18:33:52.292Z"
     },
     "content-meta": {
       "source": "github:quartz-community/content-meta",
@@ -146,10 +152,10 @@
       "installedAt": "2026-06-03T13:16:36.665Z"
     },
     "graph": {
-      "source": "github:quartz-community/graph",
-      "resolved": "https://github.com/quartz-community/graph.git",
-      "commit": "46f0ba1c3c0cc484697572e7bcf315fa384d80d2",
-      "installedAt": "2026-06-03T13:32:35.872Z"
+      "source": "github:diego-vicente/graph",
+      "resolved": "https://github.com/diego-vicente/graph.git",
+      "commit": "11ccf6c7729c6b5e2ea48511a0aa6fd8b93cbfe0",
+      "installedAt": "2026-06-17T18:25:51.599Z"
     },
     "hard-line-breaks": {
       "source": "github:quartz-community/hard-line-breaks",
@@ -175,12 +181,6 @@
       "commit": "07eaca7b31a537c7c4a0fd2848b1f00014c940af",
       "installedAt": "2026-06-03T13:32:35.815Z"
     },
-    "obsidian-plugin-excalidraw": {
-      "source": "github:quartz-community/obsidian-plugin-excalidraw",
-      "resolved": "https://github.com/quartz-community/obsidian-plugin-excalidraw.git",
-      "commit": "dad0a4c0abdc8b3c2786277a2cbd67dc039c754c",
-      "installedAt": "2026-06-03T13:32:35.851Z"
-    },
     "og-image": {
       "source": "github:quartz-community/og-image",
       "resolved": "https://github.com/quartz-community/og-image.git",
@@ -198,17 +198,6 @@
       "resolved": "https://github.com/quartz-community/page-title.git",
       "commit": "a1c1fe0a9c6a5ce1acf6efa01d473a7d9850e2a3",
       "installedAt": "2026-06-03T13:32:36.002Z"
-    },
-    "quartz-themes": {
-      "source": {
-        "name": "quartz-themes",
-        "repo": "github:saberzero1/quartz-themes",
-        "subdir": "plugin"
-      },
-      "resolved": "https://github.com/saberzero1/quartz-themes.git",
-      "commit": "945135e8b70576753d0591e1713fe56553100b3d",
-      "subdir": "plugin",
-      "installedAt": "2026-06-11T15:50:25.576Z"
     },
     "reader-mode": {
       "source": "github:quartz-community/reader-mode",

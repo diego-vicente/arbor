@@ -1,3 +1,261 @@
 @use "./variables.scss" as *;
 
-// put your custom CSS here!
+/* ============================================================================
+   Arbor theme — the diego.codes / publish.css look, expressed through Quartz
+   variables. Colours + fonts come from quartz.config.yaml (teal #008080 accent,
+   Nunito body, JetBrains Mono headings/code). Layout is driven by component
+   positions in quartz.config.yaml — NOT by overriding the grid here.
+   ============================================================================ */
+
+/* ── Reading column: 18px / 1.725 line-height (publish.css) ───────────────── */
+.center > article {
+  font-size: 18px;
+  line-height: 1.725;
+}
+
+/* ── Headings: h1 teal, h2/h3 strong, h4–h6 muted (publish.css) ───────────── */
+.center > article {
+  & h1 {
+    color: var(--secondary);
+    line-height: 1.25;
+  }
+  & h2,
+  & h3 {
+    color: var(--dark);
+  }
+  & h4,
+  & h5,
+  & h6 {
+    color: var(--gray);
+  }
+  & h6 {
+    font-weight: $normalWeight;
+  }
+}
+
+/* ── Site-name banner: teal, monospace, divider (publish.css header) ──────── */
+.page-title {
+  margin: 0 0 1.5rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--lightgray);
+  font-family: var(--codeFont);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  & a {
+    color: var(--secondary);
+    text-decoration: none;
+    background: none;
+  }
+  & a:hover {
+    color: var(--tertiary);
+  }
+}
+
+/* ── Garden frame: no left sidebar; content up-front + right column ────────
+   Flexbox body (not the base grid) — predictable, no min-width:100% collapse.
+   Selectors include `> #quartz-body` to outrank base's `.center` rules.        */
+.page[data-frame="garden"] > #quartz-body {
+  display: block;
+  padding: 2rem 2.5rem; // breathing room from the viewport edges
+
+  & .garden-main {
+    display: flex;
+    gap: 3rem;
+    align-items: flex-start;
+    // Contain + centre the content+sidebar group so text isn't flush-left and
+    // lines stay a readable length (~46rem reading column once the 320px rail
+    // and gap are subtracted). Centres within the page's own max-width.
+    max-width: 72rem;
+    margin: 0 auto;
+  }
+  & .garden-main .center {
+    flex: 1 1 auto;
+    min-width: 0; // override base .center { min-width:100% } so flex can size it
+    max-width: none;
+  }
+  // Base sets .page-header margin-top + .sidebar padding-top to $topSpacing (6rem),
+  // which stacked on the body padding above. Zero them; the body padding is the
+  // single source of top spacing, and header + rail line up at the same height.
+  & .garden-main .center .page-header {
+    margin-top: 0;
+  }
+  & .garden-main .sidebar.right {
+    flex: 0 0 #{$sidePanelWidth};
+    padding-top: 0;
+    height: 100vh;
+    position: sticky;
+    top: 2rem;
+  }
+
+  @media all and #{$mobile} {
+    padding: 1rem 1.25rem;
+    & .garden-main {
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    & .garden-main .sidebar.right {
+      flex-basis: auto;
+      width: 100%;
+      height: unset;
+      position: static;
+    }
+  }
+}
+
+/* ── Links: teal, underline only on hover ─────────────────────────────────── */
+.center > article a.internal,
+.center > article a.external {
+  text-decoration: none;
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+/* ── Link colors by target note `type` (arbor-taxonomy plugin) ───────────────
+   The plugin tags each *published* internal link with data-link-type=<slug>
+   (e.g. "[[Coffee Beans]]" → "coffee-beans"). Colors are the Catppuccin palette
+   from my Obsidian graph (.obsidian/graph.json) — grouped exactly as the graph's
+   color queries are. Links to typeless or unknown-type notes inherit the default
+   teal (--secondary); broken links stay grey (see below).                       */
+// v4 palette (2026-06-17) — hand-tuned from the raw graph colors. Full history
+// and the original v1 mapping live in docs/11-link-color-palette.md.
+$tonedGrey: #9b9b9b; // de-emphasized grey for structural/meta notes (lighter than the missing-note grey)
+$linkTypeColors: (
+  // Concept is the most common type → keep it the understated default accent
+  // teal so it doesn't shout.
+  "concept": #008080,
+  "idea": #ddaa11,
+  // yellow
+  "person": #ea76cb,
+  // pink
+  "place": #7287fd,
+  // lavender
+  // Project / Task / Meeting → red
+  "project": #d20f0f,
+  "task": #d20f0f,
+  "meeting": #d20f0f,
+  // Article / Book / Film / Video → rosewater
+  "article": #dc8a78,
+  "book": #dc8a78,
+  "film": #dc8a78,
+  "video": #dc8a78,
+  // Recipe / Practice → peach
+  "recipe": #fe640b,
+  "practice": #fe640b,
+  // Talk / Slides → blue
+  "talk": #1e66f5,
+  "slides": #1e66f5,
+  "coffee-beans": #7e5f49,
+  // brown
+  // Check-in / Journal Entry → teal
+  "check-in": #179299,
+  "journal-entry": #179299,
+  // Habit → sky (the freed-up color)
+  "habit": #04a5e5,
+  // Travel Itinerary → green
+  "travel-itinerary": #40a02b,
+  // Structural / meta notes → toned-down grey
+  "obsidian-entity": $tonedGrey,
+  "index": $tonedGrey,
+);
+
+/* Expose the palette as CSS custom properties so the (client-side) graph can
+   color its nodes by type from the SAME source — `--lt-<type>`. The forked graph
+   resolves these via getComputedStyle. */
+:root {
+  @each $type, $color in $linkTypeColors {
+    --lt-#{$type}: #{$color};
+  }
+}
+
+/* Each typed link gets its hue for the text and a 10%-opacity tint of that same
+   hue for the pill background — matching the default --highlight intensity
+   (rgba teal at 0.1), just recolored to the link's type.
+
+   Applied globally (not just `.center > article`): the article tree transform AND
+   the build-time ArborLinkColorizer both set data-link-type, so this colors links
+   everywhere they appear — article, backlinks, properties, bases, tag pages. The
+   attribute only lands on real note links, so nav/tag/external links are untouched. */
+$linkTypeBgOpacity: 0.1;
+$brokenInk: #8c8c8c; // mirrors theme --gray so rgba() can tint the pill at compile time
+
+a.internal {
+  @each $type, $color in $linkTypeColors {
+    &[data-link-type="#{$type}"] {
+      color: $color;
+      background-color: rgba($color, $linkTypeBgOpacity);
+    }
+  }
+}
+
+/* Missing / non-existent targets: greyed out, Obsidian-style. crawl-links adds
+   `.broken` to article links whose target isn't in the published set; the build-
+   time ArborLinkColorizer adds it to bases/component links the same way. Global
+   (not article-scoped) so missing links grey out wherever they appear — including
+   inline bases like the coffee-beans list. Overrides base.scss's teal `.broken`.  */
+a.internal.broken:not([data-link-type]) {
+  color: $brokenInk;
+  background-color: rgba($brokenInk, $linkTypeBgOpacity);
+  opacity: 0.7;
+}
+
+/* Unpublished-but-existing targets: the note exists in the vault but isn't
+   published, so it's reachable-looking but won't resolve. arbor-taxonomy adds
+   `.arbor-unpublished` (keeping the type color from the palette rule above) and
+   appends a padlock. We only dim it here to read as "greyed out, but you can
+   still tell what it is" — distinct from a flat-grey non-existent link.         */
+$unpublishedDimOpacity: 0.6;
+
+// Global (not article-scoped): unpublished links are padlocked in bases/backlinks too.
+a.internal.arbor-unpublished {
+  opacity: $unpublishedDimOpacity;
+}
+
+/* Padlock appended to unpublished links — a solid `lock` glyph that inherits the
+   link's (dimmed) type color via fill=currentColor. Sized at 1em and baseline-
+   aligned so it reads like an emoji/letter inline with the text. */
+a.internal .arbor-lock {
+  width: 1em;
+  height: 1em;
+  margin-left: 0.1em;
+  vertical-align: -0.15em;
+}
+
+/* ── Blockquotes: teal left border ────────────────────────────────────────── */
+.center > article blockquote {
+  border-left: 3px solid var(--secondary);
+}
+
+/* ── Tables: borderless, row-hover ────────────────────────────────────────── */
+.center > article table {
+  border: none;
+  border-collapse: collapse;
+}
+.center > article th,
+.center > article td {
+  border: none;
+  border-bottom: 1px solid var(--lightgray);
+  padding: 4px 10px;
+}
+.center > article thead th {
+  color: var(--gray);
+}
+.center > article tbody tr:hover {
+  background: var(--highlight);
+}
+
+/* ── Tags: outlined pill ──────────────────────────────────────────────────── */
+.center > article a.tag-link {
+  background: transparent;
+  border: 1px solid var(--lightgray);
+  color: var(--gray);
+  border-radius: 6px;
+  padding: 1px 8px;
+  font-size: 0.8em;
+}
+
+/* ── Images: rounded corners ──────────────────────────────────────────────── */
+.center > article img {
+  border-radius: 8px;
+}
