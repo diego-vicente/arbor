@@ -129,7 +129,7 @@ plugins:
     enabled: true
   - source: github:quartz-community/content-page
     enabled: true
-  - source: github:quartz-community/folder-page
+  - source: github:diego-vicente/folder-page # fork: skip folder listing when the folder has an index.base
     enabled: true
   - source: github:quartz-community/tag-page
     enabled: true
@@ -157,7 +157,7 @@ plugins:
       group: toolbar
       groupOptions:
         grow: true
-  - source: github:quartz-community/backlinks
+  - source: github:diego-vicente/backlinks # fork: groups backlinks by note type, collapsed by default
     enabled: true
     layout:
       position: right
@@ -168,7 +168,7 @@ plugins:
       position: beforeBody
       priority: 10
   - source: github:quartz-community/content-meta
-    enabled: true
+    enabled: false # date moved into the per-type Properties block (arbor-properties.ts); reading time off
     layout:
       position: beforeBody
       priority: 20
@@ -247,7 +247,7 @@ plugins:
         - tags
         - aliases
       excludedProperties: []
-      hidePropertiesView: false
+      hidePropertiesView: true # Arbor renders its own per-type Properties block (arbor-properties.ts); keep this plugin only as the frontmatter parser
       delimiters: ---
       language: yaml
     order: 5

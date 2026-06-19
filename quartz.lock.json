@@ -20,16 +20,16 @@
       "installedAt": "2026-06-03T13:32:35.204Z"
     },
     "backlinks": {
-      "source": "github:quartz-community/backlinks",
-      "resolved": "https://github.com/quartz-community/backlinks.git",
-      "commit": "7490f921b7bd974c3f2f985ad3744b06160827d6",
-      "installedAt": "2026-06-03T13:32:35.225Z"
+      "source": "github:diego-vicente/backlinks",
+      "resolved": "https://github.com/diego-vicente/backlinks.git",
+      "commit": "ca12138232b4a39a739afcdafcd7f55723812e69",
+      "installedAt": "2026-06-18T22:11:01.338Z"
     },
     "bases-page": {
       "source": "github:diego-vicente/bases-page",
       "resolved": "https://github.com/diego-vicente/bases-page.git",
-      "commit": "2545a661bfd9715320f1f07c9961ecd68f96d37b",
-      "installedAt": "2026-06-17T18:02:19.087Z"
+      "commit": "9e4fc4794a56c9f9dd8aad09e4bf3f5cfffdab4c",
+      "installedAt": "2026-06-19T11:07:14.878Z"
     },
     "breadcrumbs": {
       "source": "github:quartz-community/breadcrumbs",
@@ -128,10 +128,10 @@
       "installedAt": "2026-06-03T13:16:37.198Z"
     },
     "folder-page": {
-      "source": "github:quartz-community/folder-page",
-      "resolved": "https://github.com/quartz-community/folder-page.git",
-      "commit": "93304d22e1d7f09f93a33658ec273f7cb8d17793",
-      "installedAt": "2026-06-03T13:32:35.810Z"
+      "source": "github:diego-vicente/folder-page",
+      "resolved": "https://github.com/diego-vicente/folder-page.git",
+      "commit": "513f4f341e5601f7599e4b46b6bd83ae2d0c2333",
+      "installedAt": "2026-06-19T08:18:56.221Z"
     },
     "fonts": {
       "source": "github:quartz-community/fonts",

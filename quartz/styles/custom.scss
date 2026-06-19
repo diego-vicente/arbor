@@ -245,6 +245,86 @@ a.internal .arbor-lock {
   background: var(--highlight);
 }
 
+/* ── Per-type Properties block (arbor-properties.ts) ───────────────────────────
+   Ported from the note-properties plugin's styles so the per-type block looks
+   like the original collapsible "Properties" box (the plugin's own CSS isn't
+   emitted while its view is hidden). Scoped under `.center > article` to outrank
+   the generic article-table rules above; row-hover reset so it isn't a plain table.
+   Typed link colors come from the link palette (a.internal[data-link-type]).      */
+.center > article .note-properties {
+  margin: 0.5rem 0 1.5rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 5px;
+  font-size: 0.9rem;
+
+  &[open] > .note-properties-header {
+    border-bottom: 1px solid var(--lightgray);
+  }
+  & .note-properties-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    color: var(--darkgray);
+    font-weight: 600;
+    &::-webkit-details-marker {
+      display: none;
+    }
+    &::before {
+      content: "";
+      display: inline-block;
+      width: 0.5em;
+      height: 0.5em;
+      border-right: 2px solid var(--darkgray);
+      border-bottom: 2px solid var(--darkgray);
+      transform: rotate(-45deg);
+      transition: transform 0.2s ease;
+    }
+  }
+  &[open] > .note-properties-header::before {
+    transform: rotate(45deg);
+  }
+  & .note-properties-count {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--gray);
+    font-weight: $normalWeight;
+  }
+  & .note-properties-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    margin: 0;
+  }
+  & .note-properties-row {
+    border-bottom: 1px solid var(--lightgray);
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+  & .note-properties-key {
+    width: 35%;
+    padding: 0.35rem 0.8rem;
+    border: none;
+    color: var(--gray);
+    font-size: 0.85rem;
+    vertical-align: top;
+    word-break: break-word;
+  }
+  & .note-properties-value {
+    padding: 0.35rem 0.8rem;
+    border: none;
+    vertical-align: top;
+    word-break: break-word;
+  }
+  & tbody tr:hover {
+    background: none; // not a plain hover-table
+  }
+}
+
 /* ── Tags: outlined pill ──────────────────────────────────────────────────── */
 .center > article a.tag-link {
   background: transparent;

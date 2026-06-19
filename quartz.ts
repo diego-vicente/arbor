@@ -4,6 +4,7 @@ import { ArborPublishFilter } from "./arbor-publish-filter"
 import { ArborIndexFile } from "./arbor-index-file"
 import { ArborIndexRedirect } from "./arbor-index-redirect"
 import { ArborLinkColorizer } from "./arbor-link-colorizer"
+import { ArborProperties } from "./arbor-properties"
 // Arbor: the real filter factory from the installed plugin. The generated plugin
 // index only re-exports it as a component-registry stub, so import the dist directly.
 import { ArborTaxonomyRecorder } from "./.quartz/plugins/arbor-taxonomy/dist/index.js"
@@ -19,6 +20,11 @@ config.plugins.filters.push(ArborPublishFilter())
 // Arbor: keep the root Index.md utility note off the `index` slug. Runs first so
 // the slug override is in place before link resolution. See arbor-index-file.ts.
 config.plugins.transformers.unshift(ArborIndexFile())
+// Arbor: per-type properties block (build-time port of publish.js's per-type
+// Frontmatter Properties Display). Contributes a tree transform; note-properties
+// stays the frontmatter parser but its own view is hidden (hidePropertiesView).
+config.plugins.pageTypes ??= []
+config.plugins.pageTypes.push(ArborProperties() as (typeof config.plugins.pageTypes)[number])
 // Arbor: emit `/` as a redirect to /digital-garden (the home note keeps its natural
 // slug so inbound [[Digital Garden]] links resolve). See arbor-index-redirect.ts.
 config.plugins.emitters.push(ArborIndexRedirect())

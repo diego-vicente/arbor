@@ -19,7 +19,9 @@ import type { QuartzTransformerPluginInstance, FullSlug, FilePath } from "./quar
 // Slug remaps (vault-relative path → slug). Keeps the root `Index.md` utility
 // note off the `index` slug so the home redirect (ArborIndexRedirect) owns `/`.
 const SLUG_REMAP: Record<string, string> = {
-  "Index.md": "index-entity", // Notebook-Navigator folder-index concept note
+  // Root Index.md is a distinct concept note — keep it well clear of the `index`
+  // slug and of any folder `index.base` pages.
+  "Index.md": "obsidian-index",
 }
 
 export function ArborIndexFile(): QuartzTransformerPluginInstance {
