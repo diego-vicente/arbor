@@ -15,12 +15,18 @@ export PATH="$HOME/.nvm/versions/node/v22.16.0/bin:$PATH"
 cd "$(dirname "$0")"
 
 cmd="${1:-all}"
-do_build() { echo "Building full vault (Node $(node --version))..."; ./quartz/bootstrap-cli.mjs build; }
+# Preflight: every copy of a shared @quartz-community/* package (core + plugins)
+# must be byte-identical. They're github-pinned with no version, so installs
+# drift silently — and a mismatched slugify breaks every link (see the script).
+# Hard gate: with `set -e`, a non-zero exit here aborts the build.
+do_check() { node scripts/check-dep-consistency.mjs; }
+do_build() { do_check; echo "Building full vault (Node $(node --version))..."; ./quartz/bootstrap-cli.mjs build; }
 do_serve() { node serve.mjs; }
 
 case "$cmd" in
+  check) do_check ;;
   build) do_build ;;
   serve) do_serve ;;
   all)   do_build; do_serve ;;
-  *) echo "usage: ./dev.sh [build|serve]"; exit 1 ;;
+  *) echo "usage: ./dev.sh [check|build|serve]"; exit 1 ;;
 esac
