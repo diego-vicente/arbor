@@ -120,7 +120,7 @@ function colorizeHtml(html: string, slugs: SlugInfo): string {
   const pageSlug = html.match(BODY_SLUG_RE)?.[1] ?? ""
   return html.replace(ANCHOR_RE, (anchor) => {
     const gt = anchor.indexOf(">")
-    const open = anchor.slice(0, gt + 1)
+    let open = anchor.slice(0, gt + 1)
     const rest = anchor.slice(gt + 1) // inner HTML + "</a>"
 
     const cls = getAttr(open, "class") ?? ""
@@ -132,8 +132,21 @@ function colorizeHtml(html: string, slugs: SlugInfo): string {
     if (classes.includes(BROKEN_CLASS) || classes.includes(UNPUBLISHED_CLASS)) return anchor
     if (open.includes(`${LINK_TYPE_ATTR}=`)) return anchor
 
-    const slug = resolveSlug(getAttr(open, "href") ?? "", getAttr(open, "data-slug"), pageSlug)
+    let slug = resolveSlug(getAttr(open, "href") ?? "", getAttr(open, "data-slug"), pageSlug)
     if (!slug) return anchor
+
+    // Bases are emitted at a clean slug (`Places.base` → `/places`), but Quartz's
+    // wikilink resolver still slugifies the `.base` FILE to `…places.base`. A `.base`
+    // URL has a file extension, so static hosts serve it verbatim (no `.html`
+    // fallback) → 404. Strip `.base` from the href/data-slug and the resolved slug
+    // so the link points at the real page. (Folder-index bases are already clean.)
+    if (slug.endsWith(".base")) {
+      slug = slug.slice(0, -".base".length)
+      open = open
+        .replace(/(href="[^"#?]*)\.base(?=[#?"])/, "$1")
+        .replace(/(data-slug="[^"#?]*)\.base(?=[#?"])/, "$1")
+      anchor = open + rest
+    }
 
     // A link to a type's own note (e.g. [[Idea]]) is colored by that type itself.
     const typeOf = (s: string): string | undefined =>
