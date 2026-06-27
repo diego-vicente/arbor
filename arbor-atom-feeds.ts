@@ -24,7 +24,6 @@
 import path from "node:path"
 import fs from "node:fs/promises"
 import { readFileSync } from "node:fs"
-import { parse as parseYaml } from "yaml"
 import type {
   QuartzEmitterPluginInstance,
   BuildCtx,
@@ -211,18 +210,15 @@ async function emitFeeds(ctx: BuildCtx, content: ProcessedContent[]): Promise<Fi
     } catch {
       continue
     }
-    let feedCfg: FeedConfig | undefined
-    try {
-      feedCfg = (parseYaml(raw) as { feed?: FeedConfig } | undefined)?.feed
-    } catch {
-      continue
-    }
-    if (!feedCfg) continue
-
     const basesData = parseBasesData(raw) as
-      | { views?: BasesView[]; properties?: Record<string, { displayName?: string }> }
+      | {
+          feed?: FeedConfig
+          views?: BasesView[]
+          properties?: Record<string, { displayName?: string }>
+        }
       | null
-    if (!basesData?.views?.length) continue
+    const feedCfg = basesData?.feed
+    if (!feedCfg || !basesData?.views?.length) continue
 
     const tsProp = feedCfg.timestampProperty ?? DEFAULT_TIMESTAMP_PROP
     const author = feedCfg.author ?? ""
