@@ -222,6 +222,14 @@ a.internal .arbor-lock {
   vertical-align: -0.15em;
 }
 
+/* ── Backlinks "Bases" group: grey out the index-page links ───────────────────
+   Base pages (Films, Places, …) are grouped under a greyed "Bases" heading in the
+   backlinks panel (see backlinks fork). De-emphasize their links too — they're
+   index pages, not content — but keep them legible. */
+.backlinks-group--bases a.internal {
+  color: var(--gray);
+}
+
 /* ── Blockquotes: teal left border ────────────────────────────────────────── */
 .center > article blockquote {
   border-left: 3px solid var(--secondary);

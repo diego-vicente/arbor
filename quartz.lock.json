@@ -22,8 +22,8 @@
     "backlinks": {
       "source": "github:diego-vicente/backlinks",
       "resolved": "https://github.com/diego-vicente/backlinks.git",
-      "commit": "ca12138232b4a39a739afcdafcd7f55723812e69",
-      "installedAt": "2026-06-18T22:11:01.338Z"
+      "commit": "ece62120f852be7cea0ce6914009b620b34e6781",
+      "installedAt": "2026-06-27T23:10:22.271Z"
     },
     "bases-page": {
       "source": "github:diego-vicente/bases-page",
