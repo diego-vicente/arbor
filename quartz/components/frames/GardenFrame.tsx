@@ -1,7 +1,9 @@
 import { PageFrame, PageFrameProps } from "./types"
 import HeaderConstructor from "../Header"
+import ArborFooterConstructor from "../ArborFooter"
 
 const Header = HeaderConstructor()
+const ArborFooter = ArborFooterConstructor()
 
 /**
  * Garden frame — Obsidian-Publish-with-nav-off layout: NO left sidebar, content
@@ -22,7 +24,6 @@ export const GardenFrame: PageFrame = {
     pageBody: Content,
     afterBody,
     right,
-    footer: Footer,
   }: PageFrameProps) {
     return (
       <>
@@ -54,7 +55,7 @@ export const GardenFrame: PageFrame = {
             ))}
           </div>
         </div>
-        <Footer {...componentData} />
+        <ArborFooter {...componentData} />
       </>
     )
   },

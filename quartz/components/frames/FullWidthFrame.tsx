@@ -1,7 +1,9 @@
 import { PageFrame, PageFrameProps } from "./types"
 import HeaderConstructor from "../Header"
+import ArborFooterConstructor from "../ArborFooter"
 
 const Header = HeaderConstructor()
+const ArborFooter = ArborFooterConstructor()
 
 /**
  * Full-width page frame — no sidebars. The center content area spans the
@@ -19,7 +21,6 @@ export const FullWidthFrame: PageFrame = {
     beforeBody,
     pageBody: Content,
     afterBody,
-    footer: Footer,
   }: PageFrameProps) {
     return (
       <>
@@ -44,7 +45,7 @@ export const FullWidthFrame: PageFrame = {
             ))}
           </div>
         </div>
-        <Footer {...componentData} />
+        <ArborFooter {...componentData} />
       </>
     )
   },

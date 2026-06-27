@@ -222,6 +222,26 @@ a.internal .arbor-lock {
   vertical-align: -0.15em;
 }
 
+/* ── Footer (ArborFooter) ─────────────────────────────────────────────────────
+   Replaces the stock "Created with Quartz" footer, rendered by the page frames. */
+.arbor-footer {
+  margin: 2rem 0 1.5rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--gray);
+
+  p {
+    margin: 0;
+  }
+  a {
+    color: var(--gray);
+    text-decoration: underline;
+    &:hover {
+      color: var(--secondary);
+    }
+  }
+}
+
 /* ── Backlinks "Bases" group: grey out the index-page links ───────────────────
    Base pages (Films, Places, …) are grouped under a greyed "Bases" heading in the
    backlinks panel (see backlinks fork). De-emphasize their links too — they're

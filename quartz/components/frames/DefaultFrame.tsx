@@ -1,7 +1,9 @@
 import { PageFrame, PageFrameProps } from "./types"
 import HeaderConstructor from "../Header"
+import ArborFooterConstructor from "../ArborFooter"
 
 const Header = HeaderConstructor()
+const ArborFooter = ArborFooterConstructor()
 
 /**
  * The default page frame — three-column layout with left sidebar, center
@@ -19,7 +21,6 @@ export const DefaultFrame: PageFrame = {
     afterBody,
     left,
     right,
-    footer: Footer,
   }: PageFrameProps) {
     return (
       <>
@@ -54,7 +55,7 @@ export const DefaultFrame: PageFrame = {
             <BodyComponent {...componentData} />
           ))}
         </div>
-        <Footer {...componentData} />
+        <ArborFooter {...componentData} />
       </>
     )
   },
