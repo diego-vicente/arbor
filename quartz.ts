@@ -4,6 +4,7 @@ import { ArborPublishFilter } from "./arbor-publish-filter"
 import { ArborIndexFile } from "./arbor-index-file"
 import { ArborIndexRedirect } from "./arbor-index-redirect"
 import { ArborLinkColorizer } from "./arbor-link-colorizer"
+import { ArborAtomFeeds } from "./arbor-atom-feeds"
 import { ArborProperties } from "./arbor-properties"
 // Arbor: the real filter factory from the installed plugin. The generated plugin
 // index only re-exports it as a component-registry stub, so import the dist directly.
@@ -28,6 +29,9 @@ config.plugins.pageTypes.push(ArborProperties() as (typeof config.plugins.pageTy
 // Arbor: emit `/` as a redirect to /digital-garden (the home note keeps its natural
 // slug so inbound [[Digital Garden]] links resolve). See arbor-index-redirect.ts.
 config.plugins.emitters.push(ArborIndexRedirect())
+// Arbor: emit Atom feeds from `feed:`-marked .base files (one feed per view).
+// See arbor-atom-feeds.ts. Emits .xml, so it's independent of the colorizer's HTML pass.
+config.plugins.emitters.push(ArborAtomFeeds())
 // Arbor: build-time pass that colors internal links in components the tree transform
 // can't reach (backlinks, properties, bases, tag pages). MUST be last so every other
 // emitter has already written its HTML. See arbor-link-colorizer.ts.
