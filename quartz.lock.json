@@ -28,8 +28,8 @@
     "bases-page": {
       "source": "github:diego-vicente/bases-page",
       "resolved": "https://github.com/diego-vicente/bases-page.git",
-      "commit": "23fe0c1d5eb3196d5151c04d7bb5e7c3c6e29bd5",
-      "installedAt": "2026-06-27T23:47:50.991Z"
+      "commit": "df94f312357a5e5312581d955a27cbfbcf3e731b",
+      "installedAt": "2026-06-28T16:05:36.874Z"
     },
     "breadcrumbs": {
       "source": "github:quartz-community/breadcrumbs",
