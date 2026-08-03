@@ -170,6 +170,33 @@ function colorizeHtml(html: string, slugs: SlugInfo): string {
   })
 }
 
+/** A breadcrumb's `<a>` plus the element wrapping it, so only crumbs are matched. */
+const BREADCRUMB_ANCHOR_RE =
+  /(<div class="breadcrumb-element">\s*)<a\b([^>]*)>([\s\S]*?)<\/a>/g
+
+/**
+ * Unlink breadcrumbs that point nowhere.
+ *
+ * Folders only get a page when we author one (`index.base`) — Quartz's generated
+ * folder listing is disabled — but breadcrumbs are built from the path, so a note
+ * under a folder with no base linked to a URL that was never emitted (every note
+ * in `Personal Atlas` pointed at a 404). The crumb still belongs in the trail as
+ * context, it just isn't somewhere you can go, so render it as plain text.
+ *
+ * Runs on the same pass as the colorizer because it needs the same two things:
+ * the set of slugs actually emitted, and href→slug resolution relative to the page.
+ */
+function unlinkDeadBreadcrumbs(html: string, slugs: SlugInfo): string {
+  const pageSlug = html.match(BODY_SLUG_RE)?.[1] ?? ""
+  return html.replace(BREADCRUMB_ANCHOR_RE, (crumb, prefix: string, attrs: string, label: string) => {
+    const href = getAttr(`<a${attrs}>`, "href") ?? ""
+    const slug = resolveSlug(href, undefined, pageSlug)
+    // Unresolvable (external, anchor) or reachable → leave the link alone.
+    if (!slug || isReachable(slug, slugs.exists)) return crumb
+    return `${prefix}<span class="breadcrumb-unlinked">${label}</span>`
+  })
+}
+
 /** slug → normalized type, for every published markdown note. */
 function buildTypeMap(content: ProcessedContent[]): Map<string, string> {
   const types = new Map<string, string>()
@@ -216,7 +243,7 @@ async function colorizeOutput(ctx: BuildCtx, content: ProcessedContent[]): Promi
   for (const entry of htmlEntries) {
     const filePath = path.join(outputDir, entry)
     const html = await fs.readFile(filePath, "utf8")
-    const colored = colorizeHtml(html, slugs)
+    const colored = unlinkDeadBreadcrumbs(colorizeHtml(html, slugs), slugs)
     if (colored !== html) {
       await fs.writeFile(filePath, colored)
       touched.push(filePath as FilePath)

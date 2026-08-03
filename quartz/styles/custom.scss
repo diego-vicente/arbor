@@ -387,6 +387,14 @@ a.internal .arbor-lock {
   color: var(--gray);
 }
 
+/* ── Breadcrumbs: unlinked crumbs ─────────────────────────────────────────────
+   Folders only get a page when we author one, so a crumb for a folder without a
+   base is plain text (see unlinkDeadBreadcrumbs in arbor-link-colorizer.ts). Mute
+   it so the trail still reads as a path, without inviting a click. */
+.breadcrumb-unlinked {
+  color: var(--gray);
+}
+
 /* ── Blockquotes: teal left border ────────────────────────────────────────── */
 .center > article blockquote {
   border-left: 3px solid var(--secondary);

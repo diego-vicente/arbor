@@ -133,8 +133,11 @@ plugins:
     enabled: true
   - source: github:quartz-community/content-page
     enabled: true
+  # Folders get a page only when we author one for them (an `index.base`, emitted
+  # by bases-page). Quartz's generated listing — every file in the folder plus a
+  # tag roll-up — duplicates what the bases already present, better.
   - source: github:diego-vicente/folder-page # fork: skip folder listing when the folder has an index.base
-    enabled: true
+    enabled: false
   - source: github:quartz-community/tag-page
     enabled: true
   - source: github:quartz-community/explorer
