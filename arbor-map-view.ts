@@ -387,6 +387,34 @@ const afterDOMLoaded = `
     if (document.querySelector('link[href="' + href + '"]')) return;
     var l = document.createElement("link"); l.rel = "stylesheet"; l.href = href; document.head.appendChild(l);
   }
+  // On a standalone .base page the map IS the page, so grow it to fill the
+  // viewport. The footer stays below the fold, exactly as it does on every other
+  // page — reserving space for it here would make base pages the odd ones out.
+  // Inline bases keep their configured mapHeight: there the map is one block
+  // among many, and the frame is "garden", not "garden-wide".
+  var STANDALONE_BASE_FRAME = "garden-wide";
+  var MIN_FULL_BLEED_HEIGHT = 320;
+  function isStandaloneBasePage() {
+    var page = document.querySelector(".page");
+    return !!page && page.dataset.frame === STANDALONE_BASE_FRAME;
+  }
+  function fitToViewport(wrapper, map) {
+    if (!isStandaloneBasePage()) return;
+    var el = wrapper.querySelector(".arbor-map");
+    var body = document.getElementById("quartz-body");
+    if (!el || !body) return;
+    // Run the map from its own top down to the bottom of the viewport, less the
+    // frame's bottom padding so it isn't flush against the edge. Everything after
+    // it — rule, page footer, site footer — falls below the fold.
+    // Document coordinates (rect + scrollY), so a mid-page resize measures the
+    // same as a fresh load.
+    var mapTop = el.getBoundingClientRect().top + window.scrollY;
+    var bottomPadding = parseFloat(window.getComputedStyle(body).paddingBottom) || 0;
+    var height = window.innerHeight - mapTop - bottomPadding;
+    el.style.height = Math.max(MIN_FULL_BLEED_HEIGHT, Math.round(height)) + "px";
+    if (map) map.resize();
+  }
+
   async function initMap(wrapper) {
     if (wrapper.dataset.arborInit) return;
     wrapper.dataset.arborInit = "1";
@@ -465,6 +493,10 @@ const afterDOMLoaded = `
         } catch (e) {}
       }));
 
+      // Size to the viewport before fitting bounds, so the fit uses the final
+      // dimensions rather than the server-rendered mapHeight.
+      fitToViewport(wrapper, map);
+
       map.addSource("arbor-markers", { type: "geojson", data: cfg.data });
       map.addLayer({
         id: "arbor-markers",
@@ -499,6 +531,14 @@ const afterDOMLoaded = `
       });
       map.on("mouseenter", "arbor-markers", function () { map.getCanvas().style.cursor = "pointer"; });
       map.on("mouseleave", "arbor-markers", function () { map.getCanvas().style.cursor = ""; });
+
+      // Re-fit on resize: the space below the map changes with the viewport (the
+      // footer wraps, the tab row wraps). Debounced — resize fires continuously.
+      var resizeTimer;
+      window.addEventListener("resize", function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function () { fitToViewport(wrapper, map); }, 120);
+      });
     });
   }
   function initAll() { document.querySelectorAll(".arbor-map-wrapper").forEach(initMap); }

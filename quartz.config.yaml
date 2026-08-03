@@ -305,4 +305,12 @@ layout:
         right: []
     canvas: {}
     bases:
-      template: garden
+      # Standalone .base pages only — inline bases live on `content` pages and
+      # keep the garden layout. A base is a wide table/grid, so it takes over the
+      # right rail's width (see arbor-bases-frame.ts); the graph, backlinks and
+      # table of contents earn little on an index page, but the toolbar stays.
+      template: garden-wide
+      exclude:
+        - graph
+        - backlinks
+        - table-of-contents

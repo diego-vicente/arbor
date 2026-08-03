@@ -103,6 +103,55 @@
   }
 }
 
+/* ── Garden-wide frame: standalone .base pages (arbor-bases-frame.ts) ─────────
+   Same shell as the garden frame — identical padding and 72rem container, so a
+   base lines up with every other page — but the content spans the rail's width
+   too. The rail here holds only the toolbar (graph/backlinks/TOC are excluded
+   for this page type), so it's lifted out of the flex flow and pinned to the
+   top-right corner instead of reserving a 320px column.                          */
+.page[data-frame="garden-wide"] > #quartz-body {
+  display: block;
+  padding: 2rem 2.5rem;
+
+  & .garden-main {
+    position: relative; // containing block for the pinned toolbar
+    max-width: 72rem;
+    margin: 0 auto;
+  }
+  & .garden-main .center {
+    width: 100%;
+    min-width: 0; // override base .center { min-width: 100% }
+    max-width: none;
+  }
+  & .garden-main .center .page-header {
+    margin-top: 0;
+  }
+  & .garden-main .right.sidebar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    // Same width as the garden frame's rail, so the search bar is the same size
+    // here as on every other page — `auto` let it shrink to its content and the
+    // difference read as a glitch when moving between a note and a base.
+    width: #{$sidePanelWidth};
+    height: auto;
+    padding-top: 0;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  @media all and #{$mobile} {
+    padding: 1rem 1.25rem;
+
+    // No room to float the toolbar over the title on a phone — put it back in flow.
+    & .garden-main .right.sidebar {
+      position: static;
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+  }
+}
+
 /* ── Links: teal, underline only on hover ─────────────────────────────────── */
 .center > article a.internal,
 .center > article a.external {

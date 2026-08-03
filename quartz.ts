@@ -1,5 +1,6 @@
 import { loadQuartzConfig, loadQuartzLayout } from "./quartz/plugins/loader/config-loader"
 import "./arbor-map-view" // Arbor: register the Bases "map" view into bases-page's registry
+import "./arbor-bases-frame" // Arbor: register the `garden-wide` frame used by .base pages
 import { ArborPublishFilter } from "./arbor-publish-filter"
 import { ArborIndexFile } from "./arbor-index-file"
 import { ArborIndexRedirect } from "./arbor-index-redirect"
