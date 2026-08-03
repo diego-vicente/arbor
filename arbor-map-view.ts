@@ -392,11 +392,15 @@ const afterDOMLoaded = `
   // page — reserving space for it here would make base pages the odd ones out.
   // Inline bases keep their configured mapHeight: there the map is one block
   // among many, and the frame is "garden", not "garden-wide".
-  var STANDALONE_BASE_FRAME = "garden-wide";
+  // Must match GARDEN_WIDE_FRAME in arbor-bases-frame.ts — this island is injected
+  // as a string, so it can't import the constant.
+  var GARDEN_WIDE_FRAME = "garden-wide";
   var MIN_FULL_BLEED_HEIGHT = 320;
+  // Resize fires continuously while dragging; only re-fit once it settles.
+  var RESIZE_DEBOUNCE_MS = 120;
   function isStandaloneBasePage() {
     var page = document.querySelector(".page");
-    return !!page && page.dataset.frame === STANDALONE_BASE_FRAME;
+    return !!page && page.dataset.frame === GARDEN_WIDE_FRAME;
   }
   function fitToViewport(wrapper, map) {
     if (!isStandaloneBasePage()) return;
@@ -440,6 +444,29 @@ const afterDOMLoaded = `
       attributionControl: { compact: true },
     });
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+
+    // Re-fit on resize: the space below the map changes with the viewport (the
+    // footer wraps, the tab row wraps). Registered HERE rather than inside the
+    // map's "load" handler so it is removable even if "load" never fires.
+    var resizeTimer;
+    function onResize() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () { fitToViewport(wrapper, map); }, RESIZE_DEBOUNCE_MS);
+    }
+    window.addEventListener("resize", onResize);
+
+    // Tear everything down on navigation. Quartz's SPA morphs the body, which
+    // strips the data-arbor-init guard above, so without this every visit to a
+    // map page built another MapLibre instance while the previous one kept its
+    // WebGL context (browsers allow ~16 before blanking the oldest), its feature
+    // data, and this resize listener — all reachable from the closure.
+    if (window.addCleanup) {
+      window.addCleanup(function () {
+        window.removeEventListener("resize", onResize);
+        clearTimeout(resizeTimer);
+        map.remove();
+      });
+    }
 
     // Build a composite marker sprite (colored disc + white Lucide icon) per
     // unique icon|color pair, mirroring obsidian-maps' canvas compositing.
@@ -531,14 +558,6 @@ const afterDOMLoaded = `
       });
       map.on("mouseenter", "arbor-markers", function () { map.getCanvas().style.cursor = "pointer"; });
       map.on("mouseleave", "arbor-markers", function () { map.getCanvas().style.cursor = ""; });
-
-      // Re-fit on resize: the space below the map changes with the viewport (the
-      // footer wraps, the tab row wraps). Debounced — resize fires continuously.
-      var resizeTimer;
-      window.addEventListener("resize", function () {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(function () { fitToViewport(wrapper, map); }, 120);
-      });
     });
   }
   function initAll() { document.querySelectorAll(".arbor-map-wrapper").forEach(initMap); }
