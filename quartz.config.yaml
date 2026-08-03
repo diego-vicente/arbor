@@ -138,8 +138,10 @@ plugins:
   # tag roll-up — duplicates what the bases already present, better.
   - source: github:diego-vicente/folder-page # fork: skip folder listing when the folder has an index.base
     enabled: false
+  # No per-tag pages: tags are metadata on a note, not destinations. Tag pills
+  # still render, just unlinked (see unlinkDeadTagLinks in arbor-link-colorizer.ts).
   - source: github:quartz-community/tag-page
-    enabled: true
+    enabled: false
   - source: github:quartz-community/explorer
     enabled: false
     layout:

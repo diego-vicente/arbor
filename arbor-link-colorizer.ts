@@ -197,6 +197,37 @@ function unlinkDeadBreadcrumbs(html: string, slugs: SlugInfo): string {
   })
 }
 
+/** A tag pill — matched by its class, since the attribute order varies by source. */
+const TAG_ANCHOR_RE = /<a\b([^>]*\bclass="[^"]*\btag-link\b[^"]*"[^>]*)>([\s\S]*?)<\/a>/g
+const TAG_UNLINKED_CLASS = "tag-unlinked"
+
+/**
+ * Turn tag pills into plain pills when there's no tag page to open.
+ *
+ * Per-tag pages aren't generated — a tag describes a note, it isn't a place —
+ * but tags are still written into the content and frontmatter, so the markup is
+ * a link to a page that was never emitted. Strip the href instead of the element:
+ * an `<a>` with no href stops being a link (not focusable, not navigable) while
+ * keeping the pill styling, so tags still read as tags.
+ *
+ * Kept target-aware rather than blanket-unlinking, so re-enabling tag-page makes
+ * the pills clickable again with no further change here.
+ */
+function unlinkDeadTagLinks(html: string, slugs: SlugInfo): string {
+  const pageSlug = html.match(BODY_SLUG_RE)?.[1] ?? ""
+  return html.replace(TAG_ANCHOR_RE, (whole, attrs: string, label: string) => {
+    const open = `<a${attrs}>`
+    const slug = resolveSlug(getAttr(open, "href") ?? "", getAttr(open, "data-slug"), pageSlug)
+    if (!slug || isReachable(slug, slugs.exists)) return whole
+    const inert = open
+      .replace(/\s+href="[^"]*"/, "")
+      .replace(/\s+data-slug="[^"]*"/, "")
+      // `.broken` would grey it as a missing note; it isn't missing, it's just not a link.
+      .replace(/\b(class="[^"]*?)\s*\bbroken\b/, "$1")
+    return addClass(inert, TAG_UNLINKED_CLASS) + label + "</a>"
+  })
+}
+
 /** slug → normalized type, for every published markdown note. */
 function buildTypeMap(content: ProcessedContent[]): Map<string, string> {
   const types = new Map<string, string>()
@@ -243,7 +274,7 @@ async function colorizeOutput(ctx: BuildCtx, content: ProcessedContent[]): Promi
   for (const entry of htmlEntries) {
     const filePath = path.join(outputDir, entry)
     const html = await fs.readFile(filePath, "utf8")
-    const colored = unlinkDeadBreadcrumbs(colorizeHtml(html, slugs), slugs)
+    const colored = unlinkDeadTagLinks(unlinkDeadBreadcrumbs(colorizeHtml(html, slugs), slugs), slugs)
     if (colored !== html) {
       await fs.writeFile(filePath, colored)
       touched.push(filePath as FilePath)

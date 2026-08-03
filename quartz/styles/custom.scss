@@ -555,6 +555,18 @@ a.internal .arbor-lock {
   font-size: 0.8em;
 }
 
+/* Tags with no page behind them keep the pill but stop behaving like links:
+   `<a>` without href already loses navigation and focus, this drops the affordances
+   (see unlinkDeadTagLinks in arbor-link-colorizer.ts). */
+a.tag-link.tag-unlinked {
+  cursor: default;
+
+  &:hover {
+    color: var(--gray);
+    text-decoration: none;
+  }
+}
+
 /* ── Images: rounded corners ──────────────────────────────────────────────── */
 .center > article img {
   border-radius: 8px;
