@@ -81,8 +81,15 @@ const server = http.createServer((req, res) => {
     const urlPath = (req.url || "/").split("?")[0].split("#")[0];
     const target = await resolveTarget(urlPath);
     if (!target) {
+      // Serve the built 404 page, as the static hosts do, so a missing note looks
+      // the same locally as in production. Falls back to a bare message if the
+      // build hasn't produced one yet.
       res.writeHead(404, { "Content-Type": "text/html; charset=utf-8" });
-      res.end(`<!doctype html><meta charset=utf-8><h1>404</h1><p>Not found: ${urlPath.replace(/</g, "&lt;")}</p>`);
+      try {
+        res.end(await fs.readFile(path.join(ROOT, "404.html")));
+      } catch {
+        res.end(`<!doctype html><meta charset=utf-8><h1>404</h1><p>Not found: ${urlPath.replace(/</g, "&lt;")}</p>`);
+      }
       return;
     }
     const type = MIME[path.extname(target.file).toLowerCase()] || "application/octet-stream";
