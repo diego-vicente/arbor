@@ -86,6 +86,18 @@
     height: 100vh;
     position: sticky;
     top: 2rem;
+    // base.scss turns the right rail into a ROW below $desktop (1200px), because
+    // in the stock layout it stops being a column there and drops under the
+    // content at full width. The garden frame keeps it a fixed-width column right
+    // down to $mobile, so between 800 and 1200px that rule crammed the graph,
+    // toolbar and backlinks side by side into 320px. Keep it stacked, and undo
+    // the equal-share sizing that comes with the row.
+    flex-direction: column;
+
+    & > * {
+      flex: 0 0 auto;
+      max-height: none;
+    }
   }
 
   @media all and #{$mobile} {
@@ -138,6 +150,12 @@
     padding-top: 0;
     display: flex;
     justify-content: flex-end;
+    // Undo base.scss's below-$desktop row sizing (see the garden frame above);
+    // here the rail holds only the toolbar, which should keep its natural size.
+    & > * {
+      flex: 0 0 auto;
+      max-height: none;
+    }
   }
 
   @media all and #{$mobile} {
