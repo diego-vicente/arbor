@@ -29,6 +29,10 @@ interface Field {
   label: string
   key: string
   kind: Kind
+  /** `url` fields print the href as their own link text, which is unreadable for
+   *  machine-built URLs (a Maps search query runs to hundreds of characters).
+   *  Set this to label the link instead. */
+  linkText?: string
 }
 
 // Ported verbatim from content/publish.js NOTE_TYPE_CONFIGS. Type is always first.
@@ -80,6 +84,16 @@ const NOTE_TYPE_CONFIGS: Record<string, Field[]> = {
     { label: "Author", key: "author", kind: "wikilink" },
     { label: "Cast", key: "cast", kind: "wikilink" },
     { label: "URL", key: "url", kind: "url" },
+  ],
+  // Places had no entry, so a Place note showed only its Type. Coordinates, icon
+  // and colour stay out — they configure the map, they aren't facts about the place.
+  "[[Place]]": [
+    { label: "Place Type", key: "placetype", kind: "wikilink" },
+    { label: "Where", key: "where", kind: "wikilink" },
+    { label: "Address", key: "address", kind: "text" },
+    { label: "Google Maps", key: "gmaps_url", kind: "url", linkText: "Open" },
+    { label: "Apple Maps", key: "apple_maps_url", kind: "url", linkText: "Open" },
+    { label: "Place For", key: "place_for", kind: "text" },
   ],
 }
 
@@ -145,7 +159,11 @@ function renderValue(
 ): ElementContent[] {
   if (field.kind === "url") {
     const href = String(raw)
-    return [el("a", { href, class: "external external-link", target: "_blank", rel: "noopener noreferrer" }, [text(href)])]
+    return [
+      el("a", { href, class: "external external-link", target: "_blank", rel: "noopener noreferrer" }, [
+        text(field.linkText ?? href),
+      ]),
+    ]
   }
   if (field.kind === "date" || field.kind === "datetime") {
     return [text(formatDate(raw, field.kind === "datetime"))]
