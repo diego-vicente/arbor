@@ -290,10 +290,24 @@ layout:
       gap: 0.5rem
   byPageType:
     "404":
+      # Wear the site's own layout rather than the bare `minimal` frame: landing on
+      # a 404 should still feel like the garden, and it puts the search box within
+      # reach — the most likely thing a reader wants next. The graph, backlinks and
+      # table of contents have nothing to show for a page that doesn't exist.
+      template: garden
+      exclude:
+        # Nothing to show for a page that doesn't exist.
+        - graph
+        - backlinks
+        - table-of-contents
+        - note-properties
+        # The site-name banner stays (it's what makes this look like the garden),
+        # but a generated "404" heading would duplicate the page's own, and there
+        # is no trail to breadcrumb.
+        - article-title
+        - breadcrumbs
       positions:
-        beforeBody: []
         left: []
-        right: []
     content:
       template: garden
     folder:

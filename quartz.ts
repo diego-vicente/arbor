@@ -6,6 +6,7 @@ import { ArborIndexFile } from "./arbor-index-file"
 import { ArborLinkColorizer } from "./arbor-link-colorizer"
 import { ArborAtomFeeds } from "./arbor-atom-feeds"
 import { ArborProperties } from "./arbor-properties"
+import ArborNotFoundConstructor from "./quartz/components/ArborNotFound"
 // Arbor: the real filter factory from the installed plugin. The generated plugin
 // index only re-exports it as a component-registry stub, so import the dist directly.
 import { ArborTaxonomyRecorder } from "./.quartz/plugins/arbor-taxonomy/dist/index.js"
@@ -26,6 +27,17 @@ config.plugins.transformers.unshift(ArborIndexFile())
 // stays the frontmatter parser but its own view is hidden (hidePropertiesView).
 config.plugins.pageTypes ??= []
 config.plugins.pageTypes.push(ArborProperties() as (typeof config.plugins.pageTypes)[number])
+// Arbor: swap the body of the built-in 404 page type for our own. Mutating the
+// existing entry rather than adding one keeps its match/generate/priority — two
+// page types generating the slug `404` would collide.
+const notFoundPageType = config.plugins.pageTypes.find((pt) => pt.name === "404")
+if (notFoundPageType) {
+  // The dispatcher calls `body(opts)` itself, so this is the constructor, not the
+  // constructed component.
+  notFoundPageType.body = ArborNotFoundConstructor as typeof notFoundPageType.body
+} else {
+  console.warn("Arbor: no built-in 404 page type found; the stock 404 is unchanged.")
+}
 // Arbor: emit Atom feeds from `feed:`-marked .base files (one feed per view).
 // See arbor-atom-feeds.ts. Emits .xml, so it's independent of the colorizer's HTML pass.
 config.plugins.emitters.push(ArborAtomFeeds())

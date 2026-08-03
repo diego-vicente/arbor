@@ -387,6 +387,53 @@ a.internal .arbor-lock {
   color: var(--gray);
 }
 
+/* ── 404 (ArborNotFound) ──────────────────────────────────────────────────────
+   Reads as a page of the garden rather than an error screen: the code is a quiet
+   label above the heading, not the headline, and the explanation gets the
+   article's normal measure. */
+.arbor-404 {
+  max-width: 34rem;
+  padding: 2rem 0;
+
+  .arbor-404-code {
+    margin: 0 0 0.25rem;
+    font-family: var(--codeFont);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--gray);
+  }
+
+  .arbor-404-title {
+    margin: 0 0 1.25rem;
+    color: var(--secondary);
+    line-height: 1.25;
+  }
+
+  .arbor-404-lede {
+    margin: 0 0 0.5rem;
+    color: var(--darkgray);
+  }
+
+  .arbor-404-reasons {
+    margin: 0 0 1.5rem;
+    padding-left: 1.1rem;
+
+    li + li {
+      margin-top: 0.5rem;
+    }
+    strong {
+      color: var(--dark);
+    }
+  }
+
+  .arbor-404-actions {
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--lightgray);
+    color: var(--darkgray);
+  }
+}
+
 /* ── Breadcrumbs: unlinked crumbs ─────────────────────────────────────────────
    Folders only get a page when we author one, so a crumb for a folder without a
    base is plain text (see unlinkDeadBreadcrumbs in arbor-link-colorizer.ts). Mute
