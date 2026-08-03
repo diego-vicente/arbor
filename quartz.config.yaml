@@ -14,6 +14,10 @@ configuration:
     - .obsidian
     - .trash
     - Assets
+    # TaskNotes rewrites this folder constantly (a note can vanish mid-parse,
+    # which is a fatal ENOENT for the build) and none of it is published anyway.
+    - Personal/Tasks
+    - Personal/Tasks/**
   theme:
     fontOrigin: googleFonts
     cdnCaching: true

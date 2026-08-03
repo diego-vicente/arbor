@@ -11,6 +11,8 @@
  * it will be extracted into a standalone `arbor-bases-map` Quartz plugin.
  */
 import { h } from "preact";
+import { transformLink, slugifyPath } from "@quartz-community/utils";
+import type { FullSlug } from "@quartz-community/types";
 
 // --- Shared registry singleton (same well-known Symbol bases-page uses, so we
 // --- attach to the exact same instance regardless of module copy/order). ---
@@ -137,25 +139,171 @@ function parseCenter(center: string | [number, number] | undefined): [number, nu
   return coordinateFromValue(cleaned);
 }
 
+// Visible text for a wikilink with no alias: the note's own name, not its vault
+// path ("Personal Atlas/Foo" reads as "Foo"). URL-shaped targets are left alone —
+// `link(url, "Label")` builds a wikilink whose target is a real URL.
+function wikilinkLabel(target: string): string {
+  if (/^[a-z]+:\/\//i.test(target)) return target;
+  const lastSegment = target.slice(target.lastIndexOf("/") + 1);
+  return lastSegment || target;
+}
+
 function toText(value: unknown): string {
   if (value == null) return "";
   if (Array.isArray(value)) return value.map(toText).filter(Boolean).join(", ");
   // Strip a leading wikilink target/alias for display
   const s = String(value);
   const m = /^\[\[(.+?)(?:\|(.*))?\]\]$/.exec(s.trim());
-  if (m) return (m[2] || m[1]).trim();
+  if (m) return (m[2] ?? wikilinkLabel(m[1] ?? "")).trim();
   return s;
+}
+
+// --- Link-aware popup rendering (parity with the bases-page tables). ---
+// The map island injects popup HTML client-side, so we resolve links to <a>
+// strings at BUILD time here rather than shipping the resolver to the browser.
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+interface LinkCtx {
+  slug: string;
+  allSlugs: string[];
+  linkResolution: "absolute" | "relative" | "shortest";
+}
+
+// transformLink() runs decodeURI internally and throws on a literal `%` in the
+// target; mirror the fork's safeTransformLink fallback so one bad title can't
+// crash the build.
+function safeLink(from: string, target: string, ctx: LinkCtx): string {
+  const opts = { strategy: ctx.linkResolution, allSlugs: ctx.allSlugs as FullSlug[] };
+  try {
+    return String(transformLink(from as FullSlug, target, opts));
+  } catch {
+    try {
+      return String(transformLink(from as FullSlug, target.replace(/%/g, "%25"), opts));
+    } catch {
+      return "#";
+    }
+  }
+}
+
+const isExternalHref = (t: string) => /^https?:\/\//i.test(t) || t.startsWith("mailto:");
+
+function anchor(href: string, label: string, external: boolean): string {
+  const cls = external ? "external external-link" : "internal internal-link";
+  const rel = external ? ' target="_blank" rel="noopener noreferrer"' : "";
+  return `<a href="${escapeHtml(href)}" class="${cls}"${rel}>${escapeHtml(label)}</a>`;
+}
+
+function isFileValue(v: unknown): v is { basename: string; path: string } {
+  return (
+    !!v &&
+    typeof v === "object" &&
+    !Array.isArray(v) &&
+    typeof (v as Record<string, unknown>).path === "string" &&
+    typeof (v as Record<string, unknown>).basename === "string"
+  );
+}
+
+const WIKILINK_RE = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
+const MDLINK_RE = /\[([^\]]*)\]\(([^)]+)\)/g;
+const URL_RE = /https?:\/\/[^\s<>]+/g;
+
+// Linkify a plain string: wikilinks (incl. link()'s `[[url|Label]]` form),
+// markdown links, and bare URLs → anchors; everything else HTML-escaped.
+function linkifyString(text: string, ctx: LinkCtx): string {
+  type Seg = { start: number; end: number; html: string };
+  const segs: Seg[] = [];
+  const overlaps = (s: number, e: number) => segs.some((g) => s < g.end && e > g.start);
+
+  for (const m of text.matchAll(WIKILINK_RE)) {
+    const target = (m[1] ?? "").trim();
+    const label = (m[2] ?? wikilinkLabel(target)).trim();
+    const ext = isExternalHref(target);
+    segs.push({
+      start: m.index ?? 0,
+      end: (m.index ?? 0) + m[0].length,
+      html: anchor(ext ? target : safeLink(ctx.slug, target, ctx), label, ext),
+    });
+  }
+  for (const m of text.matchAll(MDLINK_RE)) {
+    const s = m.index ?? 0;
+    const e = s + m[0].length;
+    if (overlaps(s, e)) continue;
+    const label = m[1] ?? "";
+    const href = m[2] ?? "";
+    const ext = isExternalHref(href);
+    segs.push({ start: s, end: e, html: anchor(ext ? href : safeLink(ctx.slug, href, ctx), label || href, ext) });
+  }
+  for (const m of text.matchAll(URL_RE)) {
+    const s = m.index ?? 0;
+    const e = s + m[0].length;
+    if (overlaps(s, e)) continue;
+    segs.push({ start: s, end: e, html: anchor(m[0], m[0], true) });
+  }
+
+  if (segs.length === 0) return escapeHtml(text);
+  segs.sort((a, b) => a.start - b.start);
+  let out = "";
+  let cursor = 0;
+  for (const g of segs) {
+    if (g.start > cursor) out += escapeHtml(text.slice(cursor, g.start));
+    out += g.html;
+    cursor = g.end;
+  }
+  if (cursor < text.length) out += escapeHtml(text.slice(cursor));
+  return out;
+}
+
+// A resolved property value → popup HTML (links preserved). Mirrors the fork's
+// renderCellValue for the value shapes the expression engine produces.
+function toHtml(value: unknown, ctx: LinkCtx): string {
+  if (value == null) return "";
+  if (Array.isArray(value)) return value.map((v) => toHtml(v, ctx)).filter(Boolean).join(", ");
+  if (isFileValue(value)) {
+    return anchor(safeLink(ctx.slug, slugifyPath(value.path.replace(/\.md$/, "")), ctx), value.basename, false);
+  }
+  if (typeof value === "string") return linkifyString(value, ctx);
+  return escapeHtml(String(value));
+}
+
+// Property label: prefer the base's configured displayName, else prettify the
+// last path segment (parity with bases-page getColumnLabel).
+function propLabel(col: string, basesData: unknown): string {
+  const cfg = (basesData as { properties?: Record<string, { displayName?: string }> } | null)?.properties?.[col];
+  if (cfg?.displayName) return cfg.displayName;
+  const seg = col.split(".").pop() ?? col;
+  return seg
+    .split("_")
+    .map((p) => (p ? p.charAt(0).toUpperCase() + p.slice(1) : p))
+    .join(" ");
 }
 
 // --- GeoJSON FeatureCollection built at BUILD time. ---
 function buildFeatureCollection(props: ViewRendererProps) {
-  const { entries, view } = props;
+  const { entries, view, slug, allSlugs, linkResolution, basesData } = props;
+  const ctx: LinkCtx = { slug, allSlugs, linkResolution };
   const coordProp = view.coordinates ?? "note.coordinates";
   const colorProp = view.markerColor;
   const iconProp = view.markerIcon;
   const DEFAULT_COLOR = "#008080";
-  // Popup fields = view.order minus the coordinate column, capped for sanity.
-  const popupFields = (view.order ?? []).filter((c) => c !== coordProp && c !== view.coordinates);
+  // Popup fields = view.order minus the columns the view consumes as map *config*
+  // rather than content: coordinates, markerIcon and markerColor. Obsidian doesn't
+  // list those as popup rows (they're already expressed by the marker itself), so
+  // excluding them here keeps the popup identical to the vault's — driven by the
+  // same base configuration, no per-base edits needed.
+  const configProps = new Set(
+    [coordProp, view.coordinates, view.markerIcon, view.markerColor].filter(Boolean) as string[],
+  );
+  const orderFields = (view.order ?? []).filter((c) => !configProps.has(c));
+  // The FIRST remaining field is the popup title (the note name, linked); the rest
+  // become label/value rows.
+  const rowFields = orderFields.slice(1);
 
   const features: unknown[] = [];
   for (const entry of entries) {
@@ -166,13 +314,17 @@ function buildFeatureCollection(props: ViewRendererProps) {
     const icon = iconProp ? toText(resolveProp(iconProp, entry)) : "";
     // Stable composite key so the island builds one sprite per icon+color pair.
     const iconKey = `${icon || "_"}|${color}`;
-    const rows = popupFields
-      .map((col) => ({ label: col.replace(/^(note|file|formula)\./, ""), value: toText(resolveProp(col, entry)) }))
-      .filter((r) => r.value);
+    // Title: always the note name, linked to its own page.
+    const titleField = orderFields[0];
+    const titleText = (titleField ? toText(resolveProp(titleField, entry)) : "") || entry.title;
+    const titleHref = safeLink(slug, entry.slug, ctx);
+    const rows = rowFields
+      .map((col) => ({ label: propLabel(col, basesData), html: toHtml(resolveProp(col, entry), ctx) }))
+      .filter((r) => r.html);
     features.push({
       type: "Feature",
       geometry: { type: "Point", coordinates: [lng, lat] }, // GeoJSON = [lng, lat]
-      properties: { title: entry.title, slug: entry.slug, color, icon: icon || undefined, iconKey, rows },
+      properties: { titleText, titleHref, slug: entry.slug, color, icon: icon || undefined, iconKey, rows },
     });
   }
   return { type: "FeatureCollection", features };
@@ -216,10 +368,15 @@ function MapView(props: ViewRendererProps): unknown {
 const css = `
 .arbor-map-wrapper { margin: 1em 0; position: relative; }
 .arbor-map { width: 100%; border-radius: var(--radius-m, 8px); overflow: hidden; background: var(--background-secondary, #eee); }
-.arbor-map .maplibregl-popup-content { font-size: 0.85em; padding: 8px 10px; }
-.arbor-map-popup-title { font-weight: 600; display: block; margin-bottom: 2px; }
-.arbor-map-popup-row { display: flex; gap: 6px; }
-.arbor-map-popup-label { color: var(--text-muted, #888); }
+.maplibregl-popup-content { font-size: 0.88rem; padding: 10px 12px; }
+.arbor-map-popup-title { font-weight: 600; display: block; margin-bottom: 5px; font-size: 1.1em; }
+.arbor-map-popup-title a { text-decoration: none; }
+.arbor-map-popup-title a:hover { text-decoration: underline; }
+.arbor-map-popup-row { display: flex; gap: 6px; line-height: 1.5; }
+.arbor-map-popup-label { color: var(--gray, #888); flex: 0 0 auto; }
+.arbor-map-popup-value { min-width: 0; word-break: break-word; }
+.arbor-map-popup-value a { text-decoration: none; }
+.arbor-map-popup-value a:hover { text-decoration: underline; }
 `;
 
 // --- The READ-time island. Plain ES2020 (no TS) — injected verbatim into a
@@ -315,7 +472,7 @@ const afterDOMLoaded = `
         source: "arbor-markers",
         layout: {
           "icon-image": ["get", "iconKey"],
-          "icon-size": ["interpolate", ["linear"], ["zoom"], 4, 0.5, 14, 0.62, 18, 0.7],
+          "icon-size": ["interpolate", ["linear"], ["zoom"], 4, 0.6, 14, 0.75, 18, 0.85],
           "icon-allow-overlap": true,
           "icon-ignore-placement": true,
         },
@@ -331,9 +488,12 @@ const afterDOMLoaded = `
         var f = e.features && e.features[0]; if (!f) return;
         var p = f.properties || {};
         var rows = []; try { rows = JSON.parse(p.rows); } catch (_) { rows = p.rows || []; }
-        var html = '<span class="arbor-map-popup-title">' + (p.title || "") + "</span>";
+        var title = p.titleHref
+          ? '<a class="internal internal-link" href="' + p.titleHref + '">' + (p.titleText || "") + "</a>"
+          : (p.titleText || "");
+        var html = '<span class="arbor-map-popup-title">' + title + "</span>";
         (rows || []).forEach(function (r) {
-          html += '<div class="arbor-map-popup-row"><span class="arbor-map-popup-label">' + r.label + ':</span><span>' + r.value + "</span></div>";
+          html += '<div class="arbor-map-popup-row"><span class="arbor-map-popup-label">' + r.label + ':</span><span class="arbor-map-popup-value">' + r.html + "</span></div>";
         });
         popup.setLngLat(f.geometry.coordinates).setHTML(html).addTo(map);
       });

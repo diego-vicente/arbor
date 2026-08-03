@@ -367,3 +367,279 @@ a.internal .arbor-lock {
 .center > article img {
   border-radius: 8px;
 }
+
+/* ============================================================================
+   Bases (bases-page fork) — tweaks layered over the plugin's own CSS. Kept here
+   (not in the fork) so they survive plugin reinstalls, matching the backlinks-
+   group convention above. Selectors are scoped under `.bases-table` so they
+   outrank the fork's single-class rules regardless of stylesheet order.
+   ============================================================================ */
+
+/* ── Horizontal-scroll affordance ─────────────────────────────────────────────
+   Wide tables overflow on narrow screens (the wrapper already scrolls). Signal
+   it two ways: (1) an always-rendered slim scrollbar — browsers only show it
+   when the content actually overflows, so it's a precise "you can scroll" cue;
+   (2) a Lea Verou scroll-shadow — soft shadows at the edges that reveal more
+   content and auto-hide once you reach either end. The white→transparent "cover"
+   layers are pinned to the content (background-attachment: local) and match the
+   page background, so they only mask the shadow at the scroll extremes.          */
+.bases-table-wrapper {
+  scrollbar-width: thin;
+  scrollbar-color: var(--lightgray) transparent;
+
+  background:
+    linear-gradient(to right, var(--light) 20%, rgba(0, 0, 0, 0)) 0 0 / 28px 100% no-repeat local,
+    linear-gradient(to left, var(--light) 20%, rgba(0, 0, 0, 0)) 100% 0 / 28px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0)) 0 0 / 10px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0)) 100% 0 / 10px 100% no-repeat
+      scroll;
+
+  &::-webkit-scrollbar {
+    height: 0.55rem;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--lightgray);
+    border-radius: 999px;
+  }
+  &:hover::-webkit-scrollbar-thumb {
+    background: var(--gray);
+  }
+}
+
+/* ── Card meta rows: uniform row height ───────────────────────────────────────
+   base.scss gives `a.internal` an explicit `line-height: 1.4rem` (for the pill
+   background), while plain values — star ratings, numbers, dates — fall back to
+   `normal` (~1.5 × the 0.8rem font-size ≈ 19px). Same font-size, but rows differ
+   by ~3.4px, so unlinked attributes read as slightly smaller and the meta grid
+   loses its rhythm. Pin every row to the anchor's line-height so linked and
+   unlinked values share one baseline.                                            */
+$internalLinkLineHeight: 1.4rem; // must track base.scss `a.internal`
+$cardRowGap: 0.75rem; // minimum breathing room between label and value
+
+/* The fork lays each row out as `display: flex; justify-content: space-between`.
+   With a single short value that reads as label-left / value-right, but a long
+   value (two directors, a multi-item list) wraps and space-between then
+   distributes the fragments instead of aligning them — the value drifts and the
+   row looks broken. A 2-column grid fixes the geometry: the label keeps its
+   intrinsic width, the value owns the rest and wraps inside its own column.
+   `minmax(0, …)` lets that column shrink below its content so long values wrap
+   rather than overflow the card.                                                 */
+.bases-card-row {
+  line-height: $internalLinkLineHeight;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0 $cardRowGap;
+  align-items: baseline;
+}
+
+/* Every value is clipped to a single line: a property that wrapped (two
+   directors, a long list) pushed the rows below it down and knocked that card
+   out of step with its neighbours. One line per property keeps the meta block a
+   predictable height; the full text stays available via the `title` tooltip that
+   cards.tsx sets. */
+.bases-card-value {
+  min-width: 0;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  /* The anchors inside reset white-space to `normal`, so a multi-value property
+     wrapped *inside its own link* and the nowrap above never took effect. Force
+     it back on every descendant. */
+  * {
+    white-space: inherit;
+  }
+
+  /* Multi-value properties render as an inline-flex list, whose overflow would
+     escape the ellipsis. Inline flow puts the text back in the parent's line box
+     so it truncates as one string. The list's flex gap also used to apply before
+     each "," separator, detaching it ("Phil Lord ,") — inline flow drops the gap,
+     so the separator carries the spacing itself. */
+  .bases-list {
+    display: inline;
+  }
+
+  .bases-separator {
+    margin-right: 0.25rem;
+  }
+}
+
+/* The "…" is painted by whichever box does the clipping, in that box's own
+   colour — so a truncated link showed a default-coloured ellipsis after its
+   type-coloured text. When the content is a single link, move the clipping onto
+   the link itself and the ellipsis inherits its colour. `inline-block` (not
+   `block`) so the link's pill background still hugs the text instead of
+   stretching across the column. */
+.bases-card-value {
+  > a:only-child,
+  > .bases-text:only-child > a:only-child {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
+  }
+}
+
+/* The title is the view's first ordered attribute, and the one most worth
+   reading in full — so it gets a second line when it needs one. Its row is a
+   shared subgrid track, so the extra line only appears when a card in that grid
+   row actually uses it, and every card keeps the same baseline below.
+   The clamp sits on the link rather than the wrapper so the "…" takes the
+   link's colour (same reason as above); `fit-content` keeps the pill background
+   hugging the text instead of stretching across the card. */
+$cardTitleMaxLines: 2;
+
+.bases-card-title {
+  > a:only-child,
+  > .bases-text:only-child > a:only-child {
+    display: -webkit-box;
+    -webkit-line-clamp: $cardTitleMaxLines;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    width: fit-content;
+    max-width: 100%;
+  }
+}
+
+/* ── Cross-card alignment (subgrid) ───────────────────────────────────────────
+   Cards sit in an auto-fit grid, so each one sizes independently: a two-line
+   title or a missing property shifts every row under it and the labels stop
+   lining up across the row. Subgrid makes the card adopt the parent's row
+   tracks, so image / title / meta become shared bands — the tallest title in a
+   row sets the height for all of them and the meta blocks start at the same y.
+   Card structure is always [image tile][body[title][meta]] — a tile is rendered
+   even with no image — so the spans below are stable.
+   Wrapped in @supports: without subgrid the cards just fall back to today's
+   independent sizing, which still works.                                        */
+/* Track counts come from cards.tsx (`--card-rows` = image + title + one per
+   property). Going one track per *property* — rather than one band for the whole
+   meta block — means each property row aligns across the cards in a grid row and
+   sizes itself to the tallest value among them. */
+$cardBodyGap: 8px; // matches the fork's .bases-card-body
+$cardMetaGap: 4px; // matches the fork's .bases-card-meta
+
+@supports (grid-template-rows: subgrid) {
+  .bases-card {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: span var(--card-rows, 3);
+    /* A subgrid inherits the parent's gaps, and .bases-cards uses `gap: 16px` for
+       the space *between cards* — which would then also open up between the image,
+       title and every property. Reset it and restore the fork's own spacing. */
+    row-gap: 0;
+  }
+
+  .bases-card-body {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: span var(--body-rows, 2);
+    row-gap: $cardBodyGap;
+  }
+
+  .bases-card-meta {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: span var(--meta-rows, 1);
+    row-gap: $cardMetaGap;
+    align-content: start;
+  }
+}
+
+
+/* ── Dates ────────────────────────────────────────────────────────────────────
+   Column widths come from the base's `columnSize` (emitted as an inline px
+   width); without one the browser's auto table layout splits the available
+   width by content, and a date like "Jun 13, 2026, 20:30" was being wrapped
+   mid-value. `nowrap` raises the cell's min-content width, so the layout has to
+   reserve the whole date — no columnSize needed. */
+.bases-date {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Grouped cards: section headers ───────────────────────────────────────────
+   Same anatomy and styling as the grouped-table headers below (muted uppercase
+   property, value in strong ink, outlined count), so a base reads consistently
+   whichever view it's showing. */
+.bases-cards-group + .bases-cards-group {
+  margin-top: 1.6rem;
+}
+
+.bases-cards-group-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0 0 0.4rem;
+  margin-bottom: 0.8rem;
+  border-bottom: 1px solid var(--lightgray);
+  font-weight: 700;
+}
+
+.bases-group-property {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--gray);
+}
+
+.bases-group-label {
+  color: var(--dark);
+}
+
+.bases-group-count {
+  margin-left: 0.15rem;
+  padding: 0.05rem 0.5rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 999px;
+  color: var(--gray);
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+/* ── Grouped-table headers ─────────────────────────────────────────────────────
+   The fork's default fills each group header with a solid --lightgray block that
+   reads as heavy divider bars. Lighten it to a typographic header: a small muted
+   uppercase property name, the value in strong ink, and an outlined count pill —
+   a cleaner separator between groups (Projects/Journal/Recipes-Coffee, etc.).     */
+.bases-table .bases-table-group-header td {
+  background: transparent;
+  border-bottom: 1px solid var(--lightgray);
+  padding: 1.3rem 0.6rem 0.4rem;
+  font-weight: 700;
+}
+.bases-table .bases-table-group-property {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--gray);
+  margin-right: 0.35rem;
+}
+.bases-table .bases-table-group-label {
+  color: var(--dark);
+
+  /* group value can now be a checkbox (booleans) or a date/link (see fork) */
+  input[type="checkbox"] {
+    vertical-align: -0.1em;
+  }
+  .bases-date {
+    font-variant-numeric: tabular-nums;
+  }
+}
+.bases-table .bases-table-group-count {
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.5rem;
+  background: transparent;
+  border: 1px solid var(--lightgray);
+  border-radius: 999px;
+  color: var(--gray);
+  font-size: 0.7rem;
+  font-weight: 500;
+  vertical-align: middle;
+}
