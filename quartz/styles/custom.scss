@@ -227,11 +227,64 @@ $linkTypeColors: (
   "index": $tonedGrey,
 );
 
+/* Dark mode: the Catppuccin MOCHA counterpart of each Latte hue above. Latte is
+   tuned for dark ink on light paper — on the dark background those same colours
+   are too dark and too saturated to read, so each maps to its Mocha sibling
+   (pink → pink, lavender → lavender, …) and the palette keeps its meaning.
+   Same keys as $linkTypeColors; every type must appear in both.                 */
+$tonedGreyDark: #9399b2; // mocha overlay2 — the structural-note grey
+$mochaBrown: #c9a58b; // Catppuccin has no brown; a pastel tan in the Mocha register
+$linkTypeColorsDark: (
+  // Concept stays the theme's own accent (dark --secondary), not Mocha teal —
+  // otherwise it would collide with Check-in / Journal Entry below, exactly as
+  // Latte keeps #008080 distinct from #179299.
+  "concept": #5ab8b8,
+  "idea": #f9e2af,
+  // yellow
+  "person": #f5c2e7,
+  // pink
+  "place": #b4befe,
+  // lavender
+  // Project / Task / Meeting → red
+  "project": #f38ba8,
+  "task": #f38ba8,
+  "meeting": #f38ba8,
+  // Article / Book / Film / Video → rosewater
+  "article": #f5e0dc,
+  "book": #f5e0dc,
+  "film": #f5e0dc,
+  "video": #f5e0dc,
+  // Recipe / Practice → peach
+  "recipe": #fab387,
+  "practice": #fab387,
+  // Talk / Slides → blue
+  "talk": #89b4fa,
+  "slides": #89b4fa,
+  "coffee-beans": $mochaBrown,
+  // Check-in / Journal Entry → teal
+  "check-in": #94e2d5,
+  "journal-entry": #94e2d5,
+  // Habit → sky
+  "habit": #89dceb,
+  // Travel Itinerary → green
+  "travel-itinerary": #a6e3a1,
+  // Structural / meta notes → toned-down grey
+  "obsidian-entity": $tonedGreyDark,
+  "index": $tonedGreyDark,
+);
+
 /* Expose the palette as CSS custom properties so the (client-side) graph can
    color its nodes by type from the SAME source — `--lt-<type>`. The forked graph
-   resolves these via getComputedStyle. */
+   resolves these via getComputedStyle, so overriding them under the dark theme
+   recolors the graph nodes too, with no change to the plugin. */
 :root {
   @each $type, $color in $linkTypeColors {
+    --lt-#{$type}: #{$color};
+  }
+}
+
+:root[saved-theme="dark"] {
+  @each $type, $color in $linkTypeColorsDark {
     --lt-#{$type}: #{$color};
   }
 }
@@ -245,15 +298,27 @@ $linkTypeColors: (
    everywhere they appear — article, backlinks, properties, bases, tag pages. The
    attribute only lands on real note links, so nav/tag/external links are untouched. */
 $linkTypeBgOpacity: 0.1;
-$brokenInk: #8c8c8c; // mirrors theme --gray so rgba() can tint the pill at compile time
+$brokenInk: #8c8c8c; // mirrors light theme --gray so rgba() can tint the pill at compile time
+$brokenInkDark: #848ba7; // mirrors dark theme --gray
 
-a.internal {
-  @each $type, $color in $linkTypeColors {
+@mixin linkTypePalette($colors) {
+  @each $type, $color in $colors {
     &[data-link-type="#{$type}"] {
       color: $color;
       background-color: rgba($color, $linkTypeBgOpacity);
     }
   }
+}
+
+a.internal {
+  @include linkTypePalette($linkTypeColors);
+}
+
+// Higher specificity than the rule above, so the Mocha hue wins under the dark
+// theme. Quartz sets `saved-theme` on <html> from the toggle, so this follows the
+// in-page switch rather than the OS setting.
+[saved-theme="dark"] a.internal {
+  @include linkTypePalette($linkTypeColorsDark);
 }
 
 /* Missing / non-existent targets: greyed out, Obsidian-style. crawl-links adds
@@ -265,6 +330,11 @@ a.internal.broken:not([data-link-type]) {
   color: $brokenInk;
   background-color: rgba($brokenInk, $linkTypeBgOpacity);
   opacity: 0.7;
+}
+
+[saved-theme="dark"] a.internal.broken:not([data-link-type]) {
+  color: $brokenInkDark;
+  background-color: rgba($brokenInkDark, $linkTypeBgOpacity);
 }
 
 /* Unpublished-but-existing targets: the note exists in the vault but isn't
