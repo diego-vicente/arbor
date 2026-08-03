@@ -19,6 +19,7 @@
  */
 import path from "node:path"
 import fs from "node:fs/promises"
+import { publishHomeAtRoot, ROOT_SLUG } from "./arbor-index-redirect"
 import type {
   QuartzEmitterPluginInstance,
   BuildCtx,
@@ -205,7 +206,10 @@ async function colorizeOutput(ctx: BuildCtx, content: ProcessedContent[]): Promi
     types,
     typeSlugs: new Set<string>([...types.values(), ...[...vault.values()].filter(Boolean)]),
     vault,
-    exists: new Set(htmlEntries.map(slugOfEntry)),
+    // ROOT_SLUG is added explicitly: the home page is published at `/` at the END
+    // of this pass, so the readdir above hasn't seen it yet and every "Home"
+    // breadcrumb would be treated as a dead link.
+    exists: new Set([...htmlEntries.map(slugOfEntry), ROOT_SLUG]),
   }
   const touched: FilePath[] = []
 
@@ -218,6 +222,11 @@ async function colorizeOutput(ctx: BuildCtx, content: ProcessedContent[]): Promi
       touched.push(filePath as FilePath)
     }
   }
+
+  // Republish the home page at `/` once every page above is final. This runs here
+  // rather than in its own emitter because emitters execute concurrently, so the
+  // copy would race this pass and capture the pre-colorized HTML.
+  touched.push(...(await publishHomeAtRoot(ctx)))
   return touched
 }
 

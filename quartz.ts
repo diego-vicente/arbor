@@ -3,7 +3,6 @@ import "./arbor-map-view" // Arbor: register the Bases "map" view into bases-pag
 import "./arbor-bases-frame" // Arbor: register the `garden-wide` frame used by .base pages
 import { ArborPublishFilter } from "./arbor-publish-filter"
 import { ArborIndexFile } from "./arbor-index-file"
-import { ArborIndexRedirect } from "./arbor-index-redirect"
 import { ArborLinkColorizer } from "./arbor-link-colorizer"
 import { ArborAtomFeeds } from "./arbor-atom-feeds"
 import { ArborProperties } from "./arbor-properties"
@@ -27,15 +26,15 @@ config.plugins.transformers.unshift(ArborIndexFile())
 // stays the frontmatter parser but its own view is hidden (hidePropertiesView).
 config.plugins.pageTypes ??= []
 config.plugins.pageTypes.push(ArborProperties() as (typeof config.plugins.pageTypes)[number])
-// Arbor: emit `/` as a redirect to /digital-garden (the home note keeps its natural
-// slug so inbound [[Digital Garden]] links resolve). See arbor-index-redirect.ts.
-config.plugins.emitters.push(ArborIndexRedirect())
 // Arbor: emit Atom feeds from `feed:`-marked .base files (one feed per view).
 // See arbor-atom-feeds.ts. Emits .xml, so it's independent of the colorizer's HTML pass.
 config.plugins.emitters.push(ArborAtomFeeds())
 // Arbor: build-time pass that colors internal links in components the tree transform
-// can't reach (backlinks, properties, bases, tag pages). MUST be last so every other
-// emitter has already written its HTML. See arbor-link-colorizer.ts.
+// can't reach (backlinks, properties, bases, tag pages). Page HTML is written in an
+// earlier build phase, so this sees every rendered page. As its final step it also
+// publishes the home note at `/` (see arbor-index-redirect.ts) — that copy has to
+// observe the colorized HTML, and emitters run concurrently, so it can't be its own
+// emitter. See arbor-link-colorizer.ts.
 config.plugins.emitters.push(ArborLinkColorizer())
 export default config
 export const layout = await loadQuartzLayout()
