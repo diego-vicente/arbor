@@ -28,7 +28,7 @@
     "bases-page": {
       "source": "github:diego-vicente/bases-page",
       "resolved": "https://github.com/diego-vicente/bases-page.git",
-      "commit": "b8007705f2fd2dceda20c482f121b392a264b3b4",
+      "commit": "ed504b40b137e15557dec21d9014b96ba9519fb8",
       "installedAt": "2026-08-03T00:00:00.000Z"
     },
     "breadcrumbs": {
