@@ -1,5 +1,5 @@
 /**
- * Arbor home page.
+ * Arbor home page — publishes the home note at the site root.
  *
  * The site home is the "Digital Garden" note, which keeps its natural slug
  * `digital-garden` so the ~22 inbound `[[Digital Garden]]` links resolve. This

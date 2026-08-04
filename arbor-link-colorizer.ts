@@ -19,7 +19,7 @@
  */
 import path from "node:path"
 import fs from "node:fs/promises"
-import { publishHomeAtRoot, ROOT_SLUG } from "./arbor-index-redirect"
+import { publishHomeAtRoot, ROOT_SLUG } from "./arbor-home-page"
 import type {
   QuartzEmitterPluginInstance,
   BuildCtx,

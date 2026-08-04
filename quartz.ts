@@ -44,7 +44,7 @@ config.plugins.emitters.push(ArborAtomFeeds())
 // Arbor: build-time pass that colors internal links in components the tree transform
 // can't reach (backlinks, properties, bases, tag pages). Page HTML is written in an
 // earlier build phase, so this sees every rendered page. As its final step it also
-// publishes the home note at `/` (see arbor-index-redirect.ts) — that copy has to
+// publishes the home note at `/` (see arbor-home-page.ts) — that copy has to
 // observe the colorized HTML, and emitters run concurrently, so it can't be its own
 // emitter. See arbor-link-colorizer.ts.
 config.plugins.emitters.push(ArborLinkColorizer())

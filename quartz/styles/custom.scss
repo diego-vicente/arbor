@@ -188,41 +188,48 @@
 // v4 palette (2026-06-17) — hand-tuned from the raw graph colors. Full history
 // and the original v1 mapping live in docs/11-link-color-palette.md.
 $tonedGrey: #9b9b9b; // de-emphasized grey for structural/meta notes (lighter than the missing-note grey)
+// Catppuccin Latte swatches, named so a hue can't drift from its label.
+$latteYellow: #ddaa11;
+$lattePink: #ea76cb;
+$latteLavender: #7287fd;
+$latteRed: #d20f0f;
+$latteRosewater: #dc8a78;
+$lattePeach: #fe640b;
+$latteBlue: #1e66f5;
+$latteTeal: #179299;
+$latteSky: #04a5e5;
+$latteGreen: #40a02b;
+$latteBrown: #7e5f49;
+// Concept is the most common type → keep it the understated default accent teal
+// so it doesn't shout.
+$latteAccentTeal: #008080;
 $linkTypeColors: (
-  // Concept is the most common type → keep it the understated default accent
-  // teal so it doesn't shout.
-  "concept": #008080,
-  "idea": #ddaa11,
-  // yellow
-  "person": #ea76cb,
-  // pink
-  "place": #7287fd,
-  // lavender
-  // Project / Task / Meeting → red
-  "project": #d20f0f,
-  "task": #d20f0f,
-  "meeting": #d20f0f,
-  // Article / Book / Film / Video → rosewater
-  "article": #dc8a78,
-  "book": #dc8a78,
-  "film": #dc8a78,
-  "video": #dc8a78,
-  // Recipe / Practice → peach
-  "recipe": #fe640b,
-  "practice": #fe640b,
-  // Talk / Slides → blue
-  "talk": #1e66f5,
-  "slides": #1e66f5,
-  "coffee-beans": #7e5f49,
-  // brown
-  // Check-in / Journal Entry → teal
-  "check-in": #179299,
-  "journal-entry": #179299,
-  // Habit → sky (the freed-up color)
-  "habit": #04a5e5,
-  // Travel Itinerary → green
-  "travel-itinerary": #40a02b,
-  // Structural / meta notes → toned-down grey
+  "concept": $latteAccentTeal,
+  "idea": $latteYellow,
+  "person": $lattePink,
+  "place": $latteLavender,
+  // Project / Task / Meeting
+  "project": $latteRed,
+  "task": $latteRed,
+  "meeting": $latteRed,
+  // Article / Book / Film / Video
+  "article": $latteRosewater,
+  "book": $latteRosewater,
+  "film": $latteRosewater,
+  "video": $latteRosewater,
+  // Recipe / Practice
+  "recipe": $lattePeach,
+  "practice": $lattePeach,
+  // Talk / Slides
+  "talk": $latteBlue,
+  "slides": $latteBlue,
+  "coffee-beans": $latteBrown,
+  // Check-in / Journal Entry
+  "check-in": $latteTeal,
+  "journal-entry": $latteTeal,
+  "habit": $latteSky,
+  "travel-itinerary": $latteGreen,
+  // Structural / meta notes
   "obsidian-entity": $tonedGrey,
   "index": $tonedGrey,
 );
@@ -233,42 +240,48 @@ $linkTypeColors: (
    (pink → pink, lavender → lavender, …) and the palette keeps its meaning.
    Same keys as $linkTypeColors; every type must appear in both.                 */
 $tonedGreyDark: #9399b2; // mocha overlay2 — the structural-note grey
+// Catppuccin Mocha swatches, named for the same reason as the Latte set above.
+$mochaYellow: #f9e2af;
+$mochaPink: #f5c2e7;
+$mochaLavender: #b4befe;
+$mochaRed: #f38ba8;
+$mochaRosewater: #f5e0dc;
+$mochaPeach: #fab387;
+$mochaBlue: #89b4fa;
+$mochaTeal: #94e2d5;
+$mochaSky: #89dceb;
+$mochaGreen: #a6e3a1;
 $mochaBrown: #c9a58b; // Catppuccin has no brown; a pastel tan in the Mocha register
+// Concept stays the theme's own dark accent, not Mocha teal — that belongs to
+// Check-in / Journal Entry, exactly as Latte keeps those two teals apart.
+$mochaAccentTeal: #5ab8b8;
 $linkTypeColorsDark: (
-  // Concept stays the theme's own accent (dark --secondary), not Mocha teal —
-  // otherwise it would collide with Check-in / Journal Entry below, exactly as
-  // Latte keeps #008080 distinct from #179299.
-  "concept": #5ab8b8,
-  "idea": #f9e2af,
-  // yellow
-  "person": #f5c2e7,
-  // pink
-  "place": #b4befe,
-  // lavender
-  // Project / Task / Meeting → red
-  "project": #f38ba8,
-  "task": #f38ba8,
-  "meeting": #f38ba8,
-  // Article / Book / Film / Video → rosewater
-  "article": #f5e0dc,
-  "book": #f5e0dc,
-  "film": #f5e0dc,
-  "video": #f5e0dc,
-  // Recipe / Practice → peach
-  "recipe": #fab387,
-  "practice": #fab387,
-  // Talk / Slides → blue
-  "talk": #89b4fa,
-  "slides": #89b4fa,
+  "concept": $mochaAccentTeal,
+  "idea": $mochaYellow,
+  "person": $mochaPink,
+  "place": $mochaLavender,
+  // Project / Task / Meeting
+  "project": $mochaRed,
+  "task": $mochaRed,
+  "meeting": $mochaRed,
+  // Article / Book / Film / Video
+  "article": $mochaRosewater,
+  "book": $mochaRosewater,
+  "film": $mochaRosewater,
+  "video": $mochaRosewater,
+  // Recipe / Practice
+  "recipe": $mochaPeach,
+  "practice": $mochaPeach,
+  // Talk / Slides
+  "talk": $mochaBlue,
+  "slides": $mochaBlue,
   "coffee-beans": $mochaBrown,
-  // Check-in / Journal Entry → teal
-  "check-in": #94e2d5,
-  "journal-entry": #94e2d5,
-  // Habit → sky
-  "habit": #89dceb,
-  // Travel Itinerary → green
-  "travel-itinerary": #a6e3a1,
-  // Structural / meta notes → toned-down grey
+  // Check-in / Journal Entry
+  "check-in": $mochaTeal,
+  "journal-entry": $mochaTeal,
+  "habit": $mochaSky,
+  "travel-itinerary": $mochaGreen,
+  // Structural / meta notes
   "obsidian-entity": $tonedGreyDark,
   "index": $tonedGreyDark,
 );
