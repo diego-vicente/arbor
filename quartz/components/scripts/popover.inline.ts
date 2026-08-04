@@ -59,7 +59,10 @@ async function mouseEnterHandler(
     console.error(err)
   })
 
-  if (!response) return
+  // Also bail on a non-OK response, not just a failed request. A 404 still comes
+  // back as text/html — the host serves 404.html — so without this the preview
+  // rendered the not-found page as though it were the note.
+  if (!response?.ok) return
   const rawContentType = response.headers.get("Content-Type")
   if (!rawContentType) return
   const [contentType] = rawContentType.split(";")
@@ -125,8 +128,21 @@ function clearActivePopover() {
   allPopoverElements.forEach((popoverElement) => popoverElement.classList.remove("active-popover"))
 }
 
+/**
+ * Links the build already resolved as leading nowhere: `.broken` (no such note)
+ * and `.arbor-unpublished` (the note exists in the vault but isn't published).
+ * Both 404, so there is nothing to preview — skip them rather than fetch, and the
+ * link keeps its greyed/padlocked styling as the only signal, which is the point.
+ */
+const DEAD_LINK_CLASSES = ["broken", "arbor-unpublished"]
+
+const isDeadLink = (link: HTMLAnchorElement): boolean =>
+  DEAD_LINK_CLASSES.some((cls) => link.classList.contains(cls))
+
 function setupPopovers() {
-  const links = [...document.querySelectorAll("a.internal")] as HTMLAnchorElement[]
+  const links = ([...document.querySelectorAll("a.internal")] as HTMLAnchorElement[]).filter(
+    (link) => !isDeadLink(link),
+  )
   for (const link of links) {
     link.addEventListener("mouseenter", mouseEnterHandler)
     link.addEventListener("mouseleave", clearActivePopover)
