@@ -120,8 +120,20 @@ function parseWikilink(raw: string): { target: string; display: string } {
   return { target: stripped.trim(), display: (stripped.split("/").pop() ?? stripped).trim() }
 }
 
+/**
+ * Cache for {@link buildNameMap}.
+ *
+ * The map is a pure function of `allFiles`, which is one shared array for the
+ * whole build — but this runs as a per-page tree transform, so it was rebuilt
+ * once per page (~2400×) from identical input, at O(pages × files). Keyed on the
+ * array's identity, so a rebuild with a new `allFiles` recomputes as it should.
+ */
+const nameMapCache = new WeakMap<object, Map<string, string>>()
+
 /** Build a name → slug lookup from all files (basename, title, aliases). */
 function buildNameMap(allFiles: QuartzComponentProps["allFiles"]): Map<string, string> {
+  const cached = allFiles && nameMapCache.get(allFiles as unknown as object)
+  if (cached) return cached
   const map = new Map<string, string>()
   const add = (name: unknown, slug: string) => {
     if (typeof name === "string" && name.trim() && !map.has(name.toLowerCase())) {
@@ -137,17 +149,25 @@ function buildNameMap(allFiles: QuartzComponentProps["allFiles"]): Map<string, s
     const aliases = fm.aliases
     if (Array.isArray(aliases)) aliases.forEach((a) => add(a, slug))
   }
+  if (allFiles) nameMapCache.set(allFiles as unknown as object, map)
   return map
 }
 
 const toArray = (v: unknown): unknown[] => (Array.isArray(v) ? v : [v])
 
+// Hoisted: `toLocaleDateString`/`toLocaleString` build a fresh Intl.DateTimeFormat
+// on every call, which dominates their cost. Every page emits at least one date
+// row ("Note created"), so this ran thousands of times per build.
+const DATE_FORMAT = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" })
+const DATE_TIME_FORMAT = new Intl.DateTimeFormat(undefined, {
+  dateStyle: "medium",
+  timeStyle: "short",
+})
+
 const formatDate = (raw: unknown, withTime: boolean): string => {
   const d = new Date(String(raw))
   if (Number.isNaN(d.getTime())) return String(raw)
-  return withTime
-    ? d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })
-    : d.toLocaleDateString(undefined, { dateStyle: "medium" })
+  return withTime ? DATE_TIME_FORMAT.format(d) : DATE_FORMAT.format(d)
 }
 
 /** Render one field's value to hast inline nodes, per its kind. */

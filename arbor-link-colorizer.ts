@@ -64,8 +64,17 @@ function resolveSlug(href: string, dataSlug: string | undefined, pageSlug: strin
   }
 }
 
+// Cached per attribute name: this is called three times per anchor over tens of
+// thousands of anchors, and building the RegExp dominated the match itself.
+const ATTR_RES = new Map<string, RegExp>()
+
 const getAttr = (tag: string, name: string): string | undefined => {
-  const m = tag.match(new RegExp(`\\b${name}="([^"]*)"`))
+  let re = ATTR_RES.get(name)
+  if (!re) {
+    re = new RegExp(`\\b${name}="([^"]*)"`)
+    ATTR_RES.set(name, re)
+  }
+  const m = tag.match(re)
   return m ? m[1] : undefined
 }
 
@@ -317,14 +326,27 @@ async function colorizeOutput(ctx: BuildCtx, content: ProcessedContent[]): Promi
   }
   const touched: FilePath[] = []
 
-  for (const entry of htmlEntries) {
-    const filePath = path.join(outputDir, entry)
-    const html = await fs.readFile(filePath, "utf8")
-    const colored = unlinkDeadTagLinks(unlinkDeadBreadcrumbs(colorizeHtml(html, slugs), slugs), slugs)
-    if (colored !== html) {
-      await fs.writeFile(filePath, colored)
-      touched.push(filePath as FilePath)
-    }
+  // Read/rewrite in bounded batches. This is I/O-bound — awaiting each file in
+  // turn spent most of the pass waiting — and the transforms are pure, so files
+  // are independent. Bounded rather than one big Promise.all so a large site
+  // can't exhaust the file-descriptor limit.
+  const PASS_CONCURRENCY = 32
+  for (let i = 0; i < htmlEntries.length; i += PASS_CONCURRENCY) {
+    const batch = htmlEntries.slice(i, i + PASS_CONCURRENCY)
+    const results = await Promise.all(
+      batch.map(async (entry) => {
+        const filePath = path.join(outputDir, entry)
+        const html = await fs.readFile(filePath, "utf8")
+        const colored = unlinkDeadTagLinks(
+          unlinkDeadBreadcrumbs(colorizeHtml(html, slugs), slugs),
+          slugs,
+        )
+        if (colored === html) return null
+        await fs.writeFile(filePath, colored)
+        return filePath as FilePath
+      }),
+    )
+    for (const filePath of results) if (filePath) touched.push(filePath)
   }
 
   // Republish the home page at `/` once every page above is final. This runs here
