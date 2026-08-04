@@ -154,7 +154,7 @@
     "graph": {
       "source": "github:diego-vicente/graph",
       "resolved": "https://github.com/diego-vicente/graph.git",
-      "commit": "11ccf6c7729c6b5e2ea48511a0aa6fd8b93cbfe0",
+      "commit": "38a3e2d3ae09e8905e7acf447043bc80c7eb2e50",
       "installedAt": "2026-06-17T18:25:51.599Z"
     },
     "hard-line-breaks": {
