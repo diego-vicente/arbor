@@ -240,9 +240,45 @@ function buildTypeMap(content: ProcessedContent[]): Map<string, string> {
   return types
 }
 
-/** Slug of an emitted HTML file, relative to the output root (POSIX separators). */
-const slugOfEntry = (entry: string): string =>
-  entry.slice(0, -HTML_EXT.length).split(path.sep).join("/")
+/**
+ * How an emitted file is addressed, relative to the output root (POSIX
+ * separators). A page loses its `.html` — that's the slug links resolve to — but
+ * any other artifact (a feed, a copied asset) is only reachable at its literal
+ * path, extension included.
+ */
+const slugOfEntry = (entry: string): string => {
+  const posix = entry.split(path.sep).join("/")
+  return posix.endsWith(HTML_EXT) ? posix.slice(0, -HTML_EXT.length) : posix
+}
+
+/**
+ * Emitters this pass would race, by plugin name.
+ *
+ * The pass reads the emitted HTML, so it depends on every page being on disk
+ * before it runs. That holds today for a reason that is easy to miss: page HTML
+ * is written by PageTypeDispatcher in an EARLIER build phase, which is fully
+ * drained before the concurrent phase this emitter belongs to. It does NOT hold
+ * because this emitter is pushed last — `processors/emit` runs that phase under
+ * `Promise.all`, so array order means nothing there.
+ *
+ * So any *other* emitter that writes HTML in the concurrent phase is a live race:
+ * its pages may land after the readdir (never colorized, and absent from `exists`,
+ * so every link to them is greyed as broken) or before (fine) — nondeterministically.
+ * `alias-redirects` is exactly such an emitter and ships disabled; this warns if it,
+ * or anything like it, is switched on.
+ */
+const HTML_WRITING_EMITTERS = ["AliasRedirects"]
+
+function warnOnRacingEmitters(ctx: BuildCtx): void {
+  const emitters = (ctx.cfg?.plugins?.emitters ?? []) as { name?: string }[]
+  const racing = emitters.map((e) => e?.name).filter((n) => n && HTML_WRITING_EMITTERS.includes(n))
+  if (racing.length === 0) return
+  console.warn(
+    `Arbor: ${racing.join(", ")} also writes HTML during the concurrent emit phase, ` +
+      `so ArborLinkColorizer may run before those pages exist — they would be left ` +
+      `uncolorized and links to them greyed as broken. See arbor-link-colorizer.ts.`,
+  )
+}
 
 /** Full-vault slug → type map recorded by ArborTaxonomyRecorder (incl. unpublished notes). */
 function vaultTypeMap(ctx: BuildCtx): Map<string, string> {
@@ -251,8 +287,14 @@ function vaultTypeMap(ctx: BuildCtx): Map<string, string> {
 }
 
 async function colorizeOutput(ctx: BuildCtx, content: ProcessedContent[]): Promise<FilePath[]> {
+  warnOnRacingEmitters(ctx)
   const outputDir = ctx.argv.output
-  const entries = await fs.readdir(outputDir, { recursive: true })
+  // Files only — a directory name in `exists` would make a link to a folder that
+  // has no page look reachable, which is exactly what the breadcrumb pass checks.
+  const dirents = await fs.readdir(outputDir, { recursive: true, withFileTypes: true })
+  const entries = dirents
+    .filter((d) => d.isFile())
+    .map((d) => path.relative(outputDir, path.join(d.parentPath, d.name)))
   const htmlEntries = entries.filter((e) => e.endsWith(HTML_EXT))
   // Existence = the set of pages we actually emitted (covers tag/folder/base pages,
   // which aren't in `content`); types come from the published markdown notes.
@@ -264,10 +306,14 @@ async function colorizeOutput(ctx: BuildCtx, content: ProcessedContent[]): Promi
     types,
     typeSlugs: new Set<string>([...types.values(), ...[...vault.values()].filter(Boolean)]),
     vault,
-    // ROOT_SLUG is added explicitly: the home page is published at `/` at the END
-    // of this pass, so the readdir above hasn't seen it yet and every "Home"
-    // breadcrumb would be treated as a dead link.
-    exists: new Set([...htmlEntries.map(slugOfEntry), ROOT_SLUG]),
+    // Every emitted artifact, not just pages: a `.html` entry is reachable at its
+    // extension-stripped slug, anything else (Atom feeds, copied assets) only at
+    // its literal path. Filtering to `.html` meant a link to, say, a feed resolved
+    // to a slug in neither `exists` nor `vault` and was greyed as a broken note.
+    // ROOT_SLUG is added explicitly because the home page is published at the END
+    // of this pass, after the readdir above — without it every "Home" breadcrumb
+    // reads as dead.
+    exists: new Set([...entries.map(slugOfEntry), ROOT_SLUG]),
   }
   const touched: FilePath[] = []
 
