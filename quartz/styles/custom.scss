@@ -434,6 +434,17 @@ a.internal .arbor-lock {
   }
 }
 
+/* ── Popovers: start at the note itself ───────────────────────────────────────
+   The popover script clones every `.popover-hint` in the fetched page, and the
+   frame wraps the whole beforeBody block in one — so the site-name banner and the
+   breadcrumb trail were peeked along with the note. Both are site chrome: the
+   banner is identical on every preview, and the trail belongs to a page you
+   haven't navigated to. Hide them so a peek opens on the note's title.          */
+.popover .page-title,
+.popover .breadcrumb-container {
+  display: none;
+}
+
 /* ── Breadcrumbs: unlinked crumbs ─────────────────────────────────────────────
    Folders only get a page when we author one, so a crumb for a folder without a
    base is plain text (see unlinkDeadBreadcrumbs in arbor-link-colorizer.ts). Mute
